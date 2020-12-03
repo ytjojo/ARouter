@@ -26,7 +26,7 @@ public class Test1Activity extends BaseActivity {
     @Autowired
     int height = 175;
 
-    @Autowired(name = "boy", required = true)
+    @Autowired(name = "boy", required = true,alternate = {"sex"})
     boolean girl;
 
     @Autowired

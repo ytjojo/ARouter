@@ -14,7 +14,9 @@ compileJava {
 }
 
 dependencies {
-    implementation 'com.alibaba:arouter-annotation:1.0.6'
+//    implementation 'com.alibaba:arouter-annotation:1.0.6'
+//    compileOnly files(Jvm.current().getToolsJar())
+    implementation project(':arouter-annotation')
 
     annotationProcessor 'com.google.auto.service:auto-service:1.0-rc7'
     compileOnly 'com.google.auto.service:auto-service-annotations:1.0-rc7'
@@ -25,6 +27,7 @@ dependencies {
     implementation 'org.apache.commons:commons-collections4:4.1'
 
     implementation 'com.alibaba:fastjson:1.2.48'
+    implementation "com.google.auto:auto-common:0.10"
 }
 
 apply from: '../install.gradle'

@@ -20,6 +20,7 @@ import com.squareup.javapoet.WildcardTypeName;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -164,12 +165,19 @@ public class RouteProcessor extends BaseProcessor {
                     ClassName.get(RouteMeta.class)
             );
 
+            ParameterizedTypeName inputProviderMapTypeOfGroup = ParameterizedTypeName.get(
+                    ClassName.get(Map.class),
+                    ClassName.get(Class.class),
+                    ClassName.get(RouteMeta.class)
+            );
+
+
             /*
               Build input param name.
              */
             ParameterSpec rootParamSpec = ParameterSpec.builder(inputMapTypeOfRoot, "routes").build();
             ParameterSpec groupParamSpec = ParameterSpec.builder(inputMapTypeOfGroup, "atlas").build();
-            ParameterSpec providerParamSpec = ParameterSpec.builder(inputMapTypeOfGroup, "providers").build();  // Ps. its param type same as groupParamSpec!
+            ParameterSpec providerParamSpec = ParameterSpec.builder(inputProviderMapTypeOfGroup, "providers").build();  // Ps. its param type same as groupParamSpec!
 
             /*
               Build method : 'loadInto'
@@ -250,8 +258,8 @@ public class RouteProcessor extends BaseProcessor {
                                 if (types.isSameType(tm, iProvider)) {   // Its implements iProvider interface himself.
                                     // This interface extend the IProvider, so it can be used for mark provider
                                     loadIntoMethodOfProviderBuilder.addStatement(
-                                            "providers.put($S, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, null, " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
-                                            (routeMeta.getRawType()).toString(),
+                                            "providers.put($T.class, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, null, " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
+                                            className,
                                             routeMetaCn,
                                             routeTypeCn,
                                             className,
@@ -260,8 +268,8 @@ public class RouteProcessor extends BaseProcessor {
                                 } else if (types.isSubtype(tm, iProvider)) {
                                     // This interface extend the IProvider, so it can be used for mark provider
                                     loadIntoMethodOfProviderBuilder.addStatement(
-                                            "providers.put($S, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, null, " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
-                                            tm.toString(),    // So stupid, will duplicate only save class name.
+                                            "providers.put($T.class, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, null, " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
+                                            className(getClassName(tm)),    // So stupid, will duplicate only save class name.
                                             routeMetaCn,
                                             routeTypeCn,
                                             className,
@@ -283,9 +291,13 @@ public class RouteProcessor extends BaseProcessor {
 
                         for (Map.Entry<String, Integer> types : paramsType.entrySet()) {
                             mapBodyBuilder.append("put(\"").append(types.getKey()).append("\", ").append(types.getValue()).append("); ");
-
                             RouteDoc.Param param = new RouteDoc.Param();
                             Autowired injectConfig = injectConfigs.get(types.getKey());
+                            if (!ArrayUtils.isEmpty(injectConfig.alternate())) {
+                                for (String key : injectConfig.alternate()) {
+                                    mapBodyBuilder.append("put(\"").append(key).append("\", ").append(types.getValue()).append("); ");
+                                }
+                            }
                             param.setKey(types.getKey());
                             param.setType(TypeKind.values()[types.getValue()].name().toLowerCase());
                             param.setDescription(injectConfig.desc());

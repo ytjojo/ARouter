@@ -10,26 +10,31 @@ package com.alibaba.android.arouter.facade.enums;
 public enum TypeKind {
     BOOLEAN("Boolean"),
     BYTE("Byte"),
-    BYTEARRAY("ByteArray"),
+    SHORT("Short"),
+    INT("Int"),
+    LONG("Long"),
     CHAR("Char"),
+    FLOAT("Float"),
+    DOUBLE("Double"),
+
+    // Other type
+
+    STRING("String"),
+    SERIALIZABLE("Serializable"),
+    PARCELABLE("Parcelable"),
+    OBJECT("OBJECT"),
+
+    BYTEARRAY("ByteArray"),
     CHARARRAY("CharArray"),
     CHARSEQUENCE("CharSequence"),
     CHARSEQUENCEARRAY("CharSequenceArray"),
     CHARSEQUENCEARRAYLIST("CharSequenceArrayList"),
-    DOUBLE("Double"),
-    FLOAT("Float"),
     FLOATARRAY("FloatArray"),
-    INT("Int"),
     INTEGERARRAYLIST("IntegerArrayList"),
-    LONG("Long"),
-    OBJECT("OBJECT"),
-    PARCELABLE("Parcelable"),
+
     PARCELABLEARRAYLIST("ParcelableArrayList"),
-    SERIALIZABLE("Serializable"),
-    SHORT("Short"),
     SHORTARRAY("ShortArray"),
     SPARSEPARCELABLEARRAY("SparseParcelableArray"),
-    STRING("String"),
     STRINGARRAYLIST("StringArrayList");
 
     private String statement;

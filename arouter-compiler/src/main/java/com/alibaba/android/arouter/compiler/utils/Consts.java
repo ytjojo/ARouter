@@ -20,6 +20,13 @@ public class Consts {
     public static final String NAME_OF_GROUP = PROJECT + SEPARATOR + "Group" + SEPARATOR;
     public static final String NAME_OF_INTERCEPTOR = PROJECT + SEPARATOR + "Interceptors";
     public static final String NAME_OF_AUTOWIRED = SEPARATOR + PROJECT + SEPARATOR + "Autowired";
+
+
+    public static final String NAME_OF_METHODEINVOKER = PROJECT + SEPARATOR + "MethodInvoker";
+    public static final String NAME_OF_MULTIIMEPLEMENT_GROUP = PROJECT + SEPARATOR + "MultiImplementsGroup";
+    public static final String NAME_OF_TEMPLATE_GROUP = PROJECT + SEPARATOR + "TemplateGroup";
+
+
     public static final String PACKAGE_OF_GENERATE_FILE = "com.alibaba.android.arouter.routes";
     public static final String PACKAGE_OF_GENERATE_DOCS = "com.alibaba.android.arouter.docs";
 
@@ -29,6 +36,8 @@ public class Consts {
     public static final String FRAGMENT_V4 = "android.support.v4.app.Fragment";
     public static final String SERVICE = "android.app.Service";
     public static final String PARCELABLE = "android.os.Parcelable";
+    public static final String BUNDLE = "android.os.Bundle";
+    public static final String POSTCARD = "com.alibaba.android.arouter.facade.Postcard";
 
     // Java type
     private static final String LANG = "java.lang";

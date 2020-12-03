@@ -222,4 +222,7 @@ public class RouteMeta {
     public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, Map<String, Integer> paramsType, String[] secondaryPathes, Class[] interceptors, int priority, int extra) {
         return new RouteMeta(type, null, destination, null, path, group, paramsType, secondaryPathes, interceptors, priority, extra);
     }
+    public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, int priority, int extra) {
+        return new RouteMeta(type, null, destination, null, path, group, null, null, null, priority, extra);
+    }
 }
