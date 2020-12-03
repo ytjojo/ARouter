@@ -23,15 +23,21 @@ import com.alibaba.android.arouter.facade.callback.NavigationCallback;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
 import com.alibaba.android.arouter.facade.service.*;
 import com.alibaba.android.arouter.facade.template.ILogger;
+import com.alibaba.android.arouter.facade.template.IMethodInvoker;
+import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
 import com.alibaba.android.arouter.facade.template.IRouteGroup;
 import com.alibaba.android.arouter.thread.DefaultPoolExecutor;
+import com.alibaba.android.arouter.utils.ActivityStartUtil;
+import com.alibaba.android.arouter.utils.CollectionUtils;
 import com.alibaba.android.arouter.utils.Consts;
 import com.alibaba.android.arouter.utils.DefaultLogger;
+import com.alibaba.android.arouter.utils.GlobleCallbackNotifer;
 import com.alibaba.android.arouter.utils.TextUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -50,6 +56,7 @@ final class _ARouter {
     private volatile static _ARouter instance = null;
     private volatile static boolean hasInit = false;
     private volatile static ThreadPoolExecutor executor = DefaultPoolExecutor.getInstance();
+    private HashMap<String, Postcard> mHangUpedPostcards = new HashMap<String, Postcard>();
     private static Handler mHandler;
     private static Context mContext;
 
@@ -249,13 +256,13 @@ final class _ARouter {
 
     protected <T> T navigation(Class<? extends T> service) {
         try {
-            Postcard postcard = LogisticsCenter.buildProvider(service.getName());
+            Postcard postcard = LogisticsCenter.buildProvider(service);
 
             // Compatible 1.0.5 compiler sdk.
             // Earlier versions did not use the fully qualified name to get the service
             if (null == postcard) {
                 // No service, or this service in old version.
-                postcard = LogisticsCenter.buildProvider(service.getSimpleName());
+                postcard = LogisticsCenter.buildProvider(service);
             }
 
             if (null == postcard) {
@@ -290,6 +297,8 @@ final class _ARouter {
 
         // Set context to postcard.
         postcard.setContext(null == context ? mContext : context);
+        postcard.setRequestCode(requestCode);
+        postcard.setNavigationCallback(callback);
 
         try {
             LogisticsCenter.completion(postcard);
@@ -312,11 +321,16 @@ final class _ARouter {
                 callback.onLost(postcard);
             } else {
                 // No callback for this invoke, then we use the global degrade service.
-                DegradeService degradeService = ARouter.getInstance().navigation(DegradeService.class);
-                if (null != degradeService) {
-                    degradeService.onLost(context, postcard);
+                List<DegradeService> degradeSevices = ARouter.getInstance().getMultiImplements(DegradeService.class);
+                if(!CollectionUtils.isEmpty(degradeSevices)){
+                    for(DegradeService degradeService :degradeSevices){
+                        if(degradeService.onLost(postcard.getContext(),postcard)){
+                            break;
+                        }
+                    }
                 }
             }
+            GlobleCallbackNotifer.onLost(postcard);
 
             return null;
         }
@@ -324,6 +338,7 @@ final class _ARouter {
         if (null != callback) {
             callback.onFound(postcard);
         }
+        GlobleCallbackNotifer.onFound(postcard);
 
         if (!postcard.isGreenChannel()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
             interceptorService.doInterceptions(postcard, new InterceptorCallback() {
@@ -333,8 +348,14 @@ final class _ARouter {
                  * @param postcard route meta
                  */
                 @Override
-                public void onContinue(Postcard postcard) {
-                    _navigation(postcard, requestCode, callback);
+                public void onContinue(final Postcard postcard) {
+                    runInMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            _navigation(postcard, requestCode, callback);
+                        }
+                    });
+
                 }
 
                 /**
@@ -344,10 +365,11 @@ final class _ARouter {
                  */
                 @Override
                 public void onInterrupt(Throwable exception) {
-                    if (null != callback) {
-                        callback.onInterrupt(postcard);
+                    if (!_ARouter.this.isHangUped(postcard)) {
+                        if (callback != null)
+                            callback.onInterrupt(postcard);
                     }
-
+                    GlobleCallbackNotifer.onInterrupt(postcard);
                     logger.info(Consts.TAG, "Navigation failed, termination by interceptor : " + exception.getMessage());
                 }
             });
@@ -359,36 +381,22 @@ final class _ARouter {
     }
 
     private Object _navigation(final Postcard postcard, final int requestCode, final NavigationCallback callback) {
+
+        if (!isHangUped(postcard)){
+            LogisticsCenter.getPrivateInterceptors(postcard);
+        }else {
+            return null;
+        }
         final Context currentContext = postcard.getContext();
 
         switch (postcard.getType()) {
             case ACTIVITY:
-                // Build intent
-                final Intent intent = new Intent(currentContext, postcard.getDestination());
-                intent.putExtras(postcard.getExtras());
-
-                // Set flags.
-                int flags = postcard.getFlags();
-                if (0 != flags) {
-                    intent.setFlags(flags);
-                }
-
-                // Non activity, need FLAG_ACTIVITY_NEW_TASK
-                if (!(currentContext instanceof Activity)) {
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                }
-
-                // Set Actions
-                String action = postcard.getAction();
-                if (!TextUtils.isEmpty(action)) {
-                    intent.setAction(action);
-                }
-
+                postcard.buildIntent(currentContext);
                 // Navigation in main looper.
                 runInMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        startActivity(requestCode, currentContext, intent, postcard, callback);
+                        ActivityStartUtil.startActivity(requestCode, currentContext, postcard.getIntent(), postcard, callback);
                     }
                 });
 
@@ -412,6 +420,7 @@ final class _ARouter {
                     logger.error(Consts.TAG, "Fetch fragment instance error, " + TextUtils.formatStackTrace(ex.getStackTrace()));
                 }
             case METHOD:
+                return invokeMethodInternal(postcard, postcard.getNavigationCallback());
             case SERVICE:
             default:
                 return null;
@@ -497,4 +506,74 @@ final class _ARouter {
 
         return false;
     }
+
+
+    protected <T> List<T> getMultiImplements(Class<? extends T> paramClass) {
+        return LogisticsCenter.getMultiImplements(paramClass);
+    }
+
+    protected Object invokeMethodInternal(Postcard postcard, NavigationCallback navigationCallback) {
+        Context context = postcard.getContext();
+        if (context == null){
+            context = mContext;
+        }
+        IMethodInvoker iMethodInvoker = LogisticsCenter.getIInvokeMethod((Class<IMethodInvoker>)postcard.getDestination());
+        LogisticsCenter.getPrivateInterceptors(postcard);
+        Object object = iMethodInvoker.invoke(context, postcard);
+        if (navigationCallback != null){
+            navigationCallback.onArrival(postcard);
+        }
+        if (!CollectionUtils.isEmpty(postcard.getPrivateInterceptors())) {
+            for(IPrivateInterceptor interceptor : postcard.getPrivateInterceptors()){
+                interceptor.onArrival(postcard.getContext(),postcard);
+            }
+        }
+        GlobleCallbackNotifer.onArrival(postcard);
+        return object;
+    }
+
+    protected void hangUp(String tag, Postcard postcard) {
+        if (postcard == this.mHangUpedPostcards.get(tag)){
+            return;
+        }
+        this.mHangUpedPostcards.put(tag, postcard);
+        if (postcard.getNavigationCallback() != null){
+            postcard.getNavigationCallback().onHangUp(postcard);
+        }
+        GlobleCallbackNotifer.onHangUp(postcard);
+    }
+
+    protected Object invokeMethod(Context paramContext, Postcard postcard, NavigationCallback paramNavigationCallback) {
+        return navigation(paramContext, postcard, -1, paramNavigationCallback);
+    }
+
+    protected boolean isHangUped(Postcard postcard) {
+        return (!this.mHangUpedPostcards.isEmpty() && this.mHangUpedPostcards.values().contains(postcard));
+    }
+
+    protected <T> T navigationWithTemplate(Class<? extends T> templateClass) {
+        try {
+            return (T)LogisticsCenter.buildTemplateImpl(templateClass);
+        } catch (Exception exception) {
+            logger.warning("ARouter::", exception.getMessage());
+            return null;
+        }
+    }
+
+    protected void putRoute(String path, RouteMeta routemeta) {
+        LogisticsCenter.putRoute(path, routemeta);
+    }
+
+    protected void removeHangUp(String tag) {
+        Postcard postcard = this.mHangUpedPostcards.remove(tag);
+        if (postcard != null && postcard.getNavigationCallback() != null)
+            postcard.getNavigationCallback().onInterrupt(postcard);
+        GlobleCallbackNotifer.onInterrupt(postcard);
+    }
+
+    protected void resumeHangUpPostCard(Context context, String tag) {
+        Postcard postcard = this.mHangUpedPostcards.remove(tag);
+        navigation(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
+    }
+
 }

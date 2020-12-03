@@ -14,6 +14,8 @@ public enum RouteType {
     CONTENT_PROVIDER(-1, "android.app.ContentProvider"),
     BOARDCAST(-1, ""),
     METHOD(-1, ""),
+    MULTIIMPLEMENTS(-1, ""),
+    TEMPLATE(-1, ""),
     FRAGMENT(-1, "android.app.Fragment"),
     UNKNOWN(-1, "Unknown route type");
 

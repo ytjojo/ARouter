@@ -8,19 +8,37 @@ package com.alibaba.android.arouter.facade.enums;
  * @since 2017-03-16 19:13:38
  */
 public enum TypeKind {
-    // Base type
-    BOOLEAN,
-    BYTE,
-    SHORT,
-    INT,
-    LONG,
-    CHAR,
-    FLOAT,
-    DOUBLE,
+    BOOLEAN("Boolean"),
+    BYTE("Byte"),
+    BYTEARRAY("ByteArray"),
+    CHAR("Char"),
+    CHARARRAY("CharArray"),
+    CHARSEQUENCE("CharSequence"),
+    CHARSEQUENCEARRAY("CharSequenceArray"),
+    CHARSEQUENCEARRAYLIST("CharSequenceArrayList"),
+    DOUBLE("Double"),
+    FLOAT("Float"),
+    FLOATARRAY("FloatArray"),
+    INT("Int"),
+    INTEGERARRAYLIST("IntegerArrayList"),
+    LONG("Long"),
+    OBJECT("OBJECT"),
+    PARCELABLE("Parcelable"),
+    PARCELABLEARRAYLIST("ParcelableArrayList"),
+    SERIALIZABLE("Serializable"),
+    SHORT("Short"),
+    SHORTARRAY("ShortArray"),
+    SPARSEPARCELABLEARRAY("SparseParcelableArray"),
+    STRING("String"),
+    STRINGARRAYLIST("StringArrayList");
 
-    // Other type
-    STRING,
-    SERIALIZABLE,
-    PARCELABLE,
-    OBJECT;
+    private String statement;
+
+    TypeKind(String statement) {
+        this.statement = statement;
+    }
+
+    public String getStatement() {
+        return this.statement;
+    }
 }

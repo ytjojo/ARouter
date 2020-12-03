@@ -12,6 +12,7 @@ import com.alibaba.android.arouter.facade.template.ILogger;
 import com.alibaba.android.arouter.facade.template.IRouteGroup;
 import com.alibaba.android.arouter.utils.Consts;
 
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -25,6 +26,7 @@ public final class ARouter {
     // Key of raw uri
     public static final String RAW_URI = "NTeRQWvye18AkPd6G";
     public static final String AUTO_INJECT = "wmHzgD4lOj5o4241";
+    public static final String AUTO_INJECT_PLACEHOLDERS = "SU5KRUNURURLRVk=";
 
     private volatile static ARouter instance = null;
     private volatile static boolean hasInit = false;
@@ -193,5 +195,35 @@ public final class ARouter {
      */
     public boolean addRouteGroup(IRouteGroup group) {
         return _ARouter.getInstance().addRouteGroup(group);
+    }
+
+
+    public <T> List<T> getMultiImplements(Class<? extends T> keyClass) {
+        return _ARouter.getInstance().getMultiImplements(keyClass);
+    }
+
+    public void hangUp(String tag, Postcard postcard) {
+        _ARouter.getInstance().hangUp(tag, postcard);
+    }
+
+
+    public Object invokeMethod(Context context, Postcard postcard, NavigationCallback navigationCallback) {
+        return _ARouter.getInstance().invokeMethod(context, postcard, navigationCallback);
+    }
+
+    public <T> T navigationWithtemplate(Class<? extends T> templateClass) {
+        return _ARouter.getInstance().navigationWithTemplate(templateClass);
+    }
+
+    public void putRoute(String tag, RouteMeta routemeta) {
+        _ARouter.getInstance().putRoute(tag, routemeta);
+    }
+
+    public void removeHangUp(String tag) {
+        _ARouter.getInstance().removeHangUp(tag);
+    }
+
+    public void resumeHangUpPostCard(Context context, String tag) {
+        _ARouter.getInstance().resumeHangUpPostCard(context, tag);
     }
 }

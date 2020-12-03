@@ -31,6 +31,9 @@ public class PluginLaunch implements Plugin<Project> {
             list.add(new ScanSetting('IRouteRoot'))
             list.add(new ScanSetting('IInterceptorGroup'))
             list.add(new ScanSetting('IProviderGroup'))
+            list.add(new ScanSetting('ITemplateGroup'))
+            list.add(new ScanSetting('IMethodInvoker'))
+            list.add(new ScanSetting('IMultiImplementsGroup'))
             RegisterTransform.registerList = list
             //register this plugin
             android.registerTransform(transformImpl)

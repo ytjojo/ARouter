@@ -95,4 +95,30 @@ public class TextUtils {
             return key;
         }
     }
+
+    public static boolean containChars(String source, String keyChars) {
+        int j = source.length();
+        for (int i = 0; i < j; i++) {
+            int k = 0;
+            char c = source.charAt(i);
+            while (k < keyChars.length()) {
+                if (c == keyChars.charAt(k))
+                    return true;
+                k++;
+            }
+        }
+        return false;
+    }
+
+    public static int delimiterOffset(String source, int pos, int limit, String delimiters) {
+        while (pos < limit) {
+            if (delimiters.indexOf(source.charAt(pos)) != -1)
+                return pos;
+            pos++;
+        }
+        return limit;
+    }
+
+
+
 }

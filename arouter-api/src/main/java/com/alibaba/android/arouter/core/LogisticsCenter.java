@@ -3,25 +3,38 @@ package com.alibaba.android.arouter.core;
 import android.content.Context;
 import android.net.Uri;
 
+import com.alibaba.android.arouter.base.PriorityList;
 import com.alibaba.android.arouter.exception.HandlerException;
 import com.alibaba.android.arouter.exception.NoRouteFoundException;
+import com.alibaba.android.arouter.facade.DeepLinkUri;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.enums.TypeKind;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
+import com.alibaba.android.arouter.facade.template.AbstractRouteMetaRegister;
+import com.alibaba.android.arouter.facade.template.IDeepLinkMatcher;
 import com.alibaba.android.arouter.facade.template.IInterceptorGroup;
+import com.alibaba.android.arouter.facade.template.IMethodInvoker;
+import com.alibaba.android.arouter.facade.template.IMultiImplementsGroup;
+import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
 import com.alibaba.android.arouter.facade.template.IProvider;
 import com.alibaba.android.arouter.facade.template.IProviderGroup;
 import com.alibaba.android.arouter.facade.template.IRouteGroup;
 import com.alibaba.android.arouter.facade.template.IRouteRoot;
+import com.alibaba.android.arouter.facade.template.ITemplateGroup;
+import com.alibaba.android.arouter.facade.util.ArrayUtils;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.alibaba.android.arouter.utils.ClassUtils;
+import com.alibaba.android.arouter.utils.CollectionUtils;
 import com.alibaba.android.arouter.utils.Consts;
 import com.alibaba.android.arouter.utils.MapUtils;
 import com.alibaba.android.arouter.utils.PackageUtils;
 import com.alibaba.android.arouter.utils.TextUtils;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -83,18 +96,23 @@ public class LogisticsCenter {
                     registerProvider((IProviderGroup) obj);
                 } else if (obj instanceof IInterceptorGroup) {
                     registerInterceptor((IInterceptorGroup) obj);
+                } else if (obj instanceof IMultiImplementsGroup) {
+                    registerMultiImplements((IMultiImplementsGroup) obj);
+                } else if (obj instanceof ITemplateGroup) {
+                    registerTemplate((ITemplateGroup) obj);
                 } else {
                     logger.info(TAG, "register failed, class name: " + className
                             + " should implements one of IRouteRoot/IProviderGroup/IInterceptorGroup.");
                 }
             } catch (Exception e) {
-                logger.error(TAG,"register class error:" + className);
+                logger.error(TAG, "register class error:" + className);
             }
         }
     }
 
     /**
      * method for arouter-auto-register plugin to register Routers
+     *
      * @param routeRoot IRouteRoot implementation class in the package: com.alibaba.android.arouter.core.routers
      */
     private static void registerRouteRoot(IRouteRoot routeRoot) {
@@ -106,6 +124,7 @@ public class LogisticsCenter {
 
     /**
      * method for arouter-auto-register plugin to register Interceptors
+     *
      * @param interceptorGroup IInterceptorGroup implementation class in the package: com.alibaba.android.arouter.core.routers
      */
     private static void registerInterceptor(IInterceptorGroup interceptorGroup) {
@@ -117,6 +136,7 @@ public class LogisticsCenter {
 
     /**
      * method for arouter-auto-register plugin to register Providers
+     *
      * @param providerGroup IProviderGroup implementation class in the package: com.alibaba.android.arouter.core.routers
      */
     private static void registerProvider(IProviderGroup providerGroup) {
@@ -197,21 +217,6 @@ public class LogisticsCenter {
         }
     }
 
-    /**
-     * Build postcard by serviceName
-     *
-     * @param serviceName interfaceName
-     * @return postcard
-     */
-    public static Postcard buildProvider(String serviceName) {
-        RouteMeta meta = Warehouse.providersIndex.get(serviceName);
-
-        if (null == meta) {
-            return null;
-        } else {
-            return new Postcard(meta.getPath(), meta.getGroup());
-        }
-    }
 
     /**
      * Completion the postcard by route metas
@@ -223,29 +228,9 @@ public class LogisticsCenter {
             throw new NoRouteFoundException(TAG + "No postcard!");
         }
 
-        RouteMeta routeMeta = Warehouse.routes.get(postcard.getPath());
+        RouteMeta routeMeta = findRouteMeta(postcard);
         if (null == routeMeta) {
-            // Maybe its does't exist, or didn't load.
-            if (!Warehouse.groupsIndex.containsKey(postcard.getGroup())) {
-                throw new NoRouteFoundException(TAG + "There is no route match the path [" + postcard.getPath() + "], in group [" + postcard.getGroup() + "]");
-            } else {
-                // Load route and cache it into memory, then delete from metas.
-                try {
-                    if (ARouter.debuggable()) {
-                        logger.debug(TAG, String.format(Locale.getDefault(), "The group [%s] starts loading, trigger by [%s]", postcard.getGroup(), postcard.getPath()));
-                    }
-
-                    addRouteGroupDynamic(postcard.getGroup(), null);
-
-                    if (ARouter.debuggable()) {
-                        logger.debug(TAG, String.format(Locale.getDefault(), "The group [%s] has already been loaded, trigger by [%s]", postcard.getGroup(), postcard.getPath()));
-                    }
-                } catch (Exception e) {
-                    throw new HandlerException(TAG + "Fatal exception when loading group meta. [" + e.getMessage() + "]");
-                }
-
-                completion(postcard);   // Reload
-            }
+            throw new NoRouteFoundException(TAG + "There is no route match the path [" + postcard.getPath() + "], in group [" + postcard.getGroup() + "]");
         } else {
             postcard.setDestination(routeMeta.getDestination());
             postcard.setType(routeMeta.getType());
@@ -355,7 +340,7 @@ public class LogisticsCenter {
     }
 
     public synchronized static void addRouteGroupDynamic(String groupName, IRouteGroup group) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        if (Warehouse.groupsIndex.containsKey(groupName)){
+        if (Warehouse.groupsIndex.containsKey(groupName)) {
             // If this group is included, but it has not been loaded
             // load this group first, because dynamic route has high priority.
             Warehouse.groupsIndex.get(groupName).getConstructor().newInstance().loadInto(Warehouse.routes);
@@ -365,6 +350,243 @@ public class LogisticsCenter {
         // cover old group.
         if (null != group) {
             group.loadInto(Warehouse.routes);
+        }
+    }
+
+
+    public static void addRouteMeta(String path, RouteMeta routemeta) {
+        if (!path.startsWith("/")) {
+            throw new IllegalArgumentException("path must star with /");
+        }
+        Warehouse.routes.put(path, routemeta);
+        if (!ArrayUtils.isEmpty(routemeta.getSecondaryPathes()))
+            for (String str : routemeta.getSecondaryPathes()) {
+                if (TextUtils.containChars(str, "<{[.(:")) {
+                    Warehouse.pathMappings.put(str, new DeepLinkUri(str, routemeta));
+                } else {
+                    Warehouse.routes.put(str, routemeta);
+                }
+            }
+    }
+
+    /**
+     * Build postcard by serviceName
+     *
+     * @param interfaceClass interfaceClass
+     * @return postcard
+     */
+    public static Postcard buildProvider(Class interfaceClass) {
+        RouteMeta routeMeta = Warehouse.providersIndex.get(interfaceClass);
+        return (routeMeta == null) ? null : new Postcard(routeMeta.getPath(), routeMeta.getGroup(), routeMeta.getDestination());
+    }
+
+    public static <T> T buildTemplateImpl(Class<T> templateClass) {
+        try {
+            return (T)Warehouse.templates.get(templateClass).getConstructor().newInstance();
+        } catch (Exception e) {
+            ARouter.logger.error("ARouter::", "Fetch templateClass instance error, " + TextUtils.formatStackTrace(e.getStackTrace()));
+        }
+        return null;
+    }
+
+    private static RouteMeta findRouteMeta(Postcard postcard) {
+        RouteMeta routeMeta = null;
+        List<IDeepLinkMatcher> deepLinkMatchers = ARouter.getInstance().getMultiImplements(IDeepLinkMatcher.class);
+        if (!CollectionUtils.isEmpty(deepLinkMatchers)) {
+            for (IDeepLinkMatcher deepLinkMatcher : deepLinkMatchers) {
+                if (postcard.getUri() == null) {
+                    routeMeta = deepLinkMatcher.findMatch(postcard.getPath(), Warehouse.routes);
+                } else {
+                    routeMeta = deepLinkMatcher.findMatch(postcard.getUri(), Warehouse.pathMappings, Warehouse.routes);
+                }
+                if (routeMeta == null) {
+                    return routeMeta;
+                }
+            }
+        }
+        routeMeta = Warehouse.routes.get(postcard.getPath());
+        if (routeMeta != null) {
+            return routeMeta;
+        }
+        if (loadByGroup(postcard.getGroup())) {
+            routeMeta = findRouteMeta(postcard);
+            if (routeMeta != null) {
+                return routeMeta;
+            }
+        }
+        if (!Warehouse.groupsIndex.isEmpty()) {
+            loadAllGroup();
+        }
+        if (!Warehouse.pathMappings.isEmpty() && postcard.getUri() != null) {
+            PriorityList<DeepLinkUri> priorityList = new PriorityList();
+            for (Map.Entry<String, DeepLinkUri> entry : Warehouse.pathMappings.entrySet()) {
+                if (entry.getValue().isMatcher(postcard.getUri().toString())) {
+                    DeepLinkUri deepLinkUri = entry.getValue();
+                    priorityList.addItem(deepLinkUri, deepLinkUri.getPriority());
+                }
+            }
+            if (!priorityList.isEmpty()) {
+                DeepLinkUri deepLinkUri = (DeepLinkUri) priorityList.get(0);
+                injectPlaceHolders(postcard, deepLinkUri, postcard.getUri().toString());
+                return deepLinkUri.getRouteMeta();
+            }
+        }
+        return routeMeta;
+    }
+
+    public static IMethodInvoker getIInvokeMethod(Class<IMethodInvoker> clazz) {
+        IMethodInvoker iMethodInvoker = Warehouse.methodInvoker.get(clazz);
+        if (iMethodInvoker == null)
+            try {
+                iMethodInvoker = clazz.getConstructor(new Class[0]).newInstance(new Object[0]);
+                Warehouse.methodInvoker.put(clazz, iMethodInvoker);
+                return iMethodInvoker;
+            } catch (Exception exception) {
+                throw new HandlerException("Init multiImplements failed! " + exception.getMessage());
+            }
+        return iMethodInvoker;
+    }
+
+    public static <T> List<T> getMultiImplements(Class<? extends T> clazz) {
+        List<T> list = Warehouse.multImplmentsIntances.get(clazz);
+        if (list == null) {
+            PriorityList<T> priorityList = new PriorityList();
+            List<RouteMeta> routeMetas = Warehouse.multImplments.get(clazz);
+            if (!CollectionUtils.isEmpty(routeMetas)) {
+                for (RouteMeta meta : routeMetas) {
+                    try {
+                        priorityList.addItem((T) meta.getDestination().getConstructor().newInstance(), meta.getPriority());
+                    } catch (Exception e) {
+                        throw new HandlerException("Init multiImplements failed! " + e.getMessage());
+                    }
+                }
+            }
+            Warehouse.multImplmentsIntances.put(clazz, priorityList);
+            list = priorityList;
+        }
+
+        ArrayList<T> arrayList = new ArrayList<>();
+        if (!list.isEmpty()) {
+            arrayList.addAll(list);
+            return arrayList;
+        }
+        return arrayList;
+    }
+
+    public static ArrayList<IPrivateInterceptor> getPrivateInterceptors(Postcard postcard) {
+        if (postcard.getInterceptors() != null) {
+            ArrayList<IPrivateInterceptor> arrayList = postcard.getPrivateInterceptors();
+            if (CollectionUtils.isEmpty(arrayList)) {
+                arrayList = new ArrayList();
+                for (Class<IPrivateInterceptor> clazz : postcard.getInterceptors()) {
+                    if (clazz.isAssignableFrom(IPrivateInterceptor.class))
+                        try {
+                            arrayList.add((IPrivateInterceptor) clazz.getConstructor().newInstance());
+                        } catch (Exception exception) {
+                            ARouter.logger.error("ARouter::", "Fetch IPrivateInterceptor instance error, " + TextUtils.formatStackTrace(exception.getStackTrace()));
+                        }
+                }
+                postcard.setPrivateInterceptors(arrayList);
+            }
+            boolean intercepted = false;
+            for (IPrivateInterceptor iPrivateInterceptor : arrayList) {
+                if (!intercepted) {
+                    intercepted |= iPrivateInterceptor.process(postcard.getContext(), postcard);
+                    if (intercepted) {
+                        break;
+                    }
+                }
+            }
+            return arrayList;
+        }
+        return null;
+    }
+
+    private static void injectPlaceHolders(Postcard postcard, DeepLinkUri deepLinkUri, String url) {
+        Map<String, String> placeHolderValues = deepLinkUri.getPlaceHolderValues(url);
+        if (CollectionUtils.isEmpty(placeHolderValues)) {
+            return;
+        }
+        Map<String, Integer> paramsType = deepLinkUri.getRouteMeta().getParamsType();
+        if (MapUtils.isNotEmpty(paramsType)) {
+            for (Map.Entry<String, Integer> entry : paramsType.entrySet()) {
+                final String key = entry.getKey();
+                setValue(postcard, entry.getValue(), key, placeHolderValues.get(key));
+            }
+            ArrayList placeHolderKeys = new ArrayList();
+            placeHolderKeys.addAll(placeHolderValues.keySet());
+            postcard.getExtras().putStringArrayList(ARouter.AUTO_INJECT_PLACEHOLDERS, placeHolderKeys);
+        }
+    }
+
+    private static void loadAllGroup() {
+        if (Warehouse.groupsIndex.isEmpty()) {
+            return;
+        }
+        final Map<String, Class<? extends IRouteGroup>> allGroup = Warehouse.groupsIndex;
+        HashMap<String, RouteMeta> allRouteMeta = new HashMap<>();
+        for (Map.Entry<String, Class<? extends IRouteGroup>> entry : allGroup.entrySet()) {
+            try {
+                ((IRouteGroup) ((Class<IRouteGroup>) entry.getValue()).getConstructor().newInstance()).loadInto(allRouteMeta);
+            } catch (Exception exception) {
+                throw new HandlerException("ARouter::Fatal exception when loading group meta. [" + exception.getMessage() + "]");
+            }
+        }
+        Warehouse.groupsIndex.clear();
+
+        List<AbstractRouteMetaRegister> registers = ARouter.getInstance().getMultiImplements(AbstractRouteMetaRegister.class);
+        if (!CollectionUtils.isEmpty(registers)) {
+            for (AbstractRouteMetaRegister register : registers) {
+                register.loadInto(allRouteMeta);
+            }
+        }
+
+        for (Map.Entry<String, RouteMeta> entry : allRouteMeta.entrySet()) {
+            addRouteMeta(entry.getKey(), entry.getValue());
+        }
+
+    }
+
+    private static boolean loadByGroup(String group) {
+        if (TextUtils.isEmpty(group)){
+            return false;
+        }
+        Class<? extends IRouteGroup> groupClazz = Warehouse.groupsIndex.get(group);
+        if (groupClazz == null)
+            return false;
+        try {
+            IRouteGroup iRouteGroup = groupClazz.getConstructor().newInstance();
+            HashMap<String, RouteMeta> groupRoutes = new HashMap();
+            iRouteGroup.loadInto(groupRoutes);
+            Warehouse.groupsIndex.remove(group);
+
+            for (Map.Entry<String, RouteMeta> entry : groupRoutes.entrySet()) {
+                String path = entry.getKey();
+                RouteMeta routeMeta = entry.getValue();
+                addRouteMeta(path, routeMeta);
+            }
+            Warehouse.routes.putAll(groupRoutes);
+            return true;
+        } catch (Exception exception) {
+            throw new HandlerException(exception.toString());
+        }
+    }
+
+    public static void putRoute(String paramString, RouteMeta paramRouteMeta) {
+        Warehouse.routes.put(paramString, paramRouteMeta);
+    }
+
+    private static void registerMultiImplements(IMultiImplementsGroup multiImplementsGroup) {
+        markRegisteredByPlugin();
+        if (multiImplementsGroup != null) {
+            multiImplementsGroup.loadInto(MultiImplmentsRegister.getInstance());
+        }
+    }
+
+    private static void registerTemplate(ITemplateGroup templateGroup) {
+        markRegisteredByPlugin();
+        if (templateGroup != null) {
+            templateGroup.loadInto(Warehouse.templates);
         }
     }
 }

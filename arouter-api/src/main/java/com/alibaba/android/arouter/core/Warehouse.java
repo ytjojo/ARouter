@@ -1,8 +1,11 @@
 package com.alibaba.android.arouter.core;
 
+import com.alibaba.android.arouter.base.PriorityList;
 import com.alibaba.android.arouter.base.UniqueKeyTreeMap;
+import com.alibaba.android.arouter.facade.DeepLinkUri;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
 import com.alibaba.android.arouter.facade.template.IInterceptor;
+import com.alibaba.android.arouter.facade.template.IMethodInvoker;
 import com.alibaba.android.arouter.facade.template.IProvider;
 import com.alibaba.android.arouter.facade.template.IRouteGroup;
 
@@ -25,11 +28,22 @@ class Warehouse {
 
     // Cache provider
     static Map<Class, IProvider> providers = new HashMap<>();
-    static Map<String, RouteMeta> providersIndex = new HashMap<>();
+    static Map<Class, RouteMeta> providersIndex = new HashMap<>();
 
     // Cache interceptor
     static Map<Integer, Class<? extends IInterceptor>> interceptorsIndex = new UniqueKeyTreeMap<>("More than one interceptors use same priority [%s]");
     static List<IInterceptor> interceptors = new ArrayList<>();
+
+    static Map<Class, IMethodInvoker> methodInvoker;
+
+    static Map<Class, PriorityList<RouteMeta>> multImplments;
+
+    static Map<Class, List> multImplmentsIntances;
+
+    static Map<String, DeepLinkUri> pathMappings;
+
+    static Map<Class, Class> templates;
+
 
     static void clear() {
         routes.clear();
@@ -38,5 +52,11 @@ class Warehouse {
         providersIndex.clear();
         interceptors.clear();
         interceptorsIndex.clear();
+        multImplmentsIntances.clear();
+        multImplments.clear();
+        pathMappings.clear();
     }
+
+
+
 }

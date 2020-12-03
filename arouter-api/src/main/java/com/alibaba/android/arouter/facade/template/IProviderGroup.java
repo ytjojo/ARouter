@@ -17,5 +17,5 @@ public interface IProviderGroup {
      *
      * @param providers input
      */
-    void loadInto(Map<String, RouteMeta> providers);
+    void loadInto(Map<Class, RouteMeta> providers);
 }

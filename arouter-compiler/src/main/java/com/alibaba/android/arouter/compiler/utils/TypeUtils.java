@@ -2,6 +2,8 @@ package com.alibaba.android.arouter.compiler.utils;
 
 import com.alibaba.android.arouter.facade.enums.TypeKind;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
