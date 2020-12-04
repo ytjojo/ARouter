@@ -1,9 +1,12 @@
 package com.alibaba.android.arouter.demo.module1.testactivity;
 
 import android.os.Bundle;
+import android.util.SparseArray;
 import android.widget.TextView;
 
 import com.alibaba.android.arouter.demo.module1.R;
+import com.alibaba.android.arouter.demo.module1.testinterceptor.Test1Interceptor;
+import com.alibaba.android.arouter.demo.module1.testinterceptor.TestPrivateInterceptor;
 import com.alibaba.android.arouter.demo.service.HelloService;
 import com.alibaba.android.arouter.demo.service.model.TestObj;
 import com.alibaba.android.arouter.demo.service.model.TestParcelable;
@@ -12,21 +15,22 @@ import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
  * https://m.aliyun.com/test/activity1?name=老王&age=23&boy=true&high=180
  */
-@Route(path = "/test/activity1", name = "测试用 Activity")
+@Route(path = "/test/activity1", interceptors = {TestPrivateInterceptor.class}, name = "测试用 Activity", secondaryPathes = {"/test/activity1secondary", "/test/activity1secondary2"})
 public class Test1Activity extends BaseActivity {
     @Autowired
-    int age = 10;
+    Integer age = 10;
 
     @Autowired
     int height = 175;
 
-    @Autowired(name = "boy", required = true,alternate = {"sex"})
+    @Autowired(name = "boy", required = true, alternate = {"sex"})
     boolean girl;
 
     @Autowired
@@ -60,6 +64,51 @@ public class Test1Activity extends BaseActivity {
 
     @Autowired
     HelloService helloService;
+
+    @Autowired
+    byte byteFlag;
+
+    @Autowired
+    byte[] bytes;
+
+
+    @Autowired(alternate = {"charArray2"})
+    char[] charArray;
+
+    @Autowired
+    CharSequence charSequence;
+
+    @Autowired
+    CharSequence[] charSequenceArray;
+
+    @Autowired
+    ArrayList<CharSequence> charSequenceArrayList;
+
+
+    @Autowired
+    float[] floats;
+
+
+    @Autowired
+    ArrayList<Integer> integerArrayList;
+
+
+    @Autowired
+    ArrayList<TestParcelable> parcelables;
+
+
+    @Autowired
+    short[] shortArray;
+
+    @Autowired
+    short shortFlag;
+
+    @Autowired
+    SparseArray<TestParcelable> sparseArrays;
+
+    @Autowired
+    ArrayList<String> stringArrayList;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -20,20 +20,21 @@ public enum TypeKind {
     // Other type
 
     STRING("String"),
+    CHARSEQUENCE("CharSequence"),
     SERIALIZABLE("Serializable"),
     PARCELABLE("Parcelable"),
-    OBJECT("OBJECT"),
-
+    OBJECT("Object"),
     BYTEARRAY("ByteArray"),
+    SHORTARRAY("ShortArray"),
     CHARARRAY("CharArray"),
-    CHARSEQUENCE("CharSequence"),
+
     CHARSEQUENCEARRAY("CharSequenceArray"),
     CHARSEQUENCEARRAYLIST("CharSequenceArrayList"),
     FLOATARRAY("FloatArray"),
     INTEGERARRAYLIST("IntegerArrayList"),
 
     PARCELABLEARRAYLIST("ParcelableArrayList"),
-    SHORTARRAY("ShortArray"),
+
     SPARSEPARCELABLEARRAY("SparseParcelableArray"),
     STRINGARRAYLIST("StringArrayList");
 

@@ -1,6 +1,7 @@
 package com.alibaba.android.arouter.compiler.processor;
 
 import com.alibaba.android.arouter.compiler.entity.RouteDoc;
+import com.alibaba.android.arouter.compiler.utils.AnnotationElementUtil;
 import com.alibaba.android.arouter.compiler.utils.Consts;
 import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
@@ -309,15 +310,49 @@ public class RouteProcessor extends BaseProcessor {
                         routeDoc.setParams(paramList);
                     }
                     String mapBody = mapBodyBuilder.toString();
+                    StringBuilder secondaryPathBuilder = null;
+                    if (!ArrayUtils.isEmpty(routeMeta.getSecondaryPathes())) {
+                        secondaryPathBuilder = new StringBuilder("new String[]{");
+                        int length = routeMeta.getSecondaryPathes().length;
+                        for (int i = 0; i < length; i++) {
+                            String path = routeMeta.getSecondaryPathes()[i];
+                            secondaryPathBuilder.append("\"");
+                            secondaryPathBuilder.append(path);
+                            secondaryPathBuilder.append("\"");
+                            if (i != length - 1) {
+                                secondaryPathBuilder.append(", ");
+                            }
+                        }
+                        secondaryPathBuilder.append("}");
 
+                    }
+                    StringBuilder interceptorBuilder = null;
+                    List<TypeElement> annotationTypeElements = AnnotationElementUtil.getAnnotationTypes(routeMeta.getRawType(), Route.class, "interceptors");
+                    if (!CollectionUtils.isEmpty(annotationTypeElements)) {
+                        interceptorBuilder = new StringBuilder("new Class[]{");
+                        int size = annotationTypeElements.size();
+                        for (int i = 0; i < size; i++) {
+                            String path = annotationTypeElements.get(i).toString();
+                            interceptorBuilder.append(path);
+                            interceptorBuilder.append(".class");
+                            if (i != size - 1) {
+                                interceptorBuilder.append(", ");
+                            }
+                        }
+                        interceptorBuilder.append("}");
+                    }
                     loadIntoMethodOfGroupBuilder.addStatement(
-                            "atlas.put($S, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, " + (StringUtils.isEmpty(mapBody) ? null : ("new java.util.HashMap<String, Integer>(){{" + mapBodyBuilder.toString() + "}}")) + ", " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
+                            "atlas.put($S, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, " + (StringUtils.isEmpty(mapBody) ? null : ("new java.util.HashMap<String, Integer>(){{" + mapBodyBuilder.toString() + "}}")) + ", " + "$L" + ", " + "$L" + ", " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
                             routeMeta.getPath(),
                             routeMetaCn,
                             routeTypeCn,
                             className,
                             routeMeta.getPath().toLowerCase(),
-                            routeMeta.getGroup().toLowerCase());
+                            routeMeta.getGroup().toLowerCase(),
+                            secondaryPathBuilder == null ? "null" : secondaryPathBuilder.toString(),
+                            interceptorBuilder == null ? "null" : interceptorBuilder.toString()
+
+                    );
 
                     routeDoc.setClassName(className.toString());
                     routeDocList.add(routeDoc);

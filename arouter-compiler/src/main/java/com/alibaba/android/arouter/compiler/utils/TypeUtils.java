@@ -4,7 +4,14 @@ import com.alibaba.android.arouter.facade.enums.TypeKind;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -33,9 +40,11 @@ public class TypeUtils {
     private Types types;
     private TypeMirror parcelableType;
     private TypeMirror serializableType;
+    private Elements elements;
 
     public TypeUtils(Types types, Elements elements) {
         this.types = types;
+        this.elements = elements;
 
         parcelableType = elements.getTypeElement(PARCELABLE).asType();
         serializableType = elements.getTypeElement(SERIALIZABLE).asType();
@@ -75,16 +84,90 @@ public class TypeUtils {
             case STRING:
                 return TypeKind.STRING.ordinal();
             default:
-                // Other side, maybe the PARCELABLE or SERIALIZABLE or OBJECT.
-                if (types.isSubtype(typeMirror, parcelableType)) {
-                    // PARCELABLE
-                    return TypeKind.PARCELABLE.ordinal();
-                } else if (types.isSubtype(typeMirror, serializableType)) {
-                    // SERIALIZABLE
-                    return TypeKind.SERIALIZABLE.ordinal();
-                } else {
-                    return TypeKind.OBJECT.ordinal();
+
+                if(typeMirror instanceof DeclaredType){
+                    if(isSubtype(element,"java.util.List")){
+                        List<? extends TypeMirror> typeArgs = ((DeclaredType) typeMirror).getTypeArguments();
+                        if (typeArgs != null && !typeArgs.isEmpty()) {
+                            TypeMirror argType = typeArgs.get(0);
+                            if (isSubtype(argType, "java.lang.Integer")) {
+                                return TypeKind.INTEGERARRAYLIST.ordinal();
+                            } else if (isSubtype(argType, "java.lang.String")) {
+                                return TypeKind.STRINGARRAYLIST.ordinal();
+                            } else if (isSubtype(argType, "java.lang.CharSequence")) {
+                                return TypeKind.CHARSEQUENCEARRAYLIST.ordinal();
+                            } else if (isSubtype(argType, "android.os.Parcelable")) {
+                                return TypeKind.PARCELABLEARRAYLIST.ordinal();
+                            }
+                        }
+                    }else if(isSubtype(element, "java.lang.CharSequence")){
+                        return TypeKind.CHARSEQUENCE.ordinal();
+                    }else if(isSubtype(element,"android.util.SparseArray")){
+                        return TypeKind.SPARSEPARCELABLEARRAY.ordinal();
+                    }
+                    // Other side, maybe the PARCELABLE or SERIALIZABLE or OBJECT.
+                    else if (types.isSubtype(typeMirror, parcelableType)) {
+                        // PARCELABLE
+                        return TypeKind.PARCELABLE.ordinal();
+                    } else if (types.isSubtype(typeMirror, serializableType)) {
+                        // SERIALIZABLE
+                        return TypeKind.SERIALIZABLE.ordinal();
+                    } else {
+                        return TypeKind.OBJECT.ordinal();
+                    }
+                }else if(typeMirror instanceof ArrayType){
+                    ArrayType arrayType = (ArrayType) typeMirror;
+                    TypeMirror compType = arrayType.getComponentType();
+                    if (compType instanceof PrimitiveType) {
+                        switch (compType.toString()){
+                            case BYTE:
+                                return TypeKind.BYTEARRAY.ordinal();
+                            case SHORT:
+                                return TypeKind.SHORTARRAY.ordinal();
+                            case INTEGER:
+                               break;
+                            case LONG:
+                               break;
+                            case FLOAT:
+                                return TypeKind.FLOATARRAY.ordinal();
+                            case DOUBEL:
+                                break;
+                            case BOOLEAN:
+                                break;
+                            case CHAR:
+                                return TypeKind.CHARARRAY.ordinal();
+                            case STRING:
+                               break;
+                        }
+                        return TypeKind.OBJECT.ordinal();
+                    } else if (compType instanceof DeclaredType) {
+                        Element compElement = ((DeclaredType) compType).asElement();
+                        if (compElement instanceof TypeElement) {
+                            if (isSubtype(compElement, "java.lang.String")) {
+                                return TypeKind.SHORTARRAY.ordinal();
+                            } else if (isSubtype(compElement, "java.lang.CharSequence")) {
+                                return TypeKind.CHARSEQUENCEARRAY.ordinal();
+                            } else if (isSubtype(compElement, "android.os.Parcelable")) {
+                                return TypeKind.SPARSEPARCELABLEARRAY.ordinal();
+                            }
+                            return TypeKind.OBJECT.ordinal();
+                        }
+                    }
                 }
+                return TypeKind.OBJECT.ordinal();
+
         }
     }
+
+
+    private boolean isSubtype(Element typeElement, String type) {
+        return types.isSubtype(typeElement.asType(),
+                elements.getTypeElement(type).asType());
+    }
+
+    private boolean isSubtype(TypeMirror typeMirror, String type) {
+        return types.isSubtype(typeMirror,
+                elements.getTypeElement(type).asType());
+    }
+
 }
