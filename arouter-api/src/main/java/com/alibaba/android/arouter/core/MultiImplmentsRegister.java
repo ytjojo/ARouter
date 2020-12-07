@@ -2,9 +2,9 @@ package com.alibaba.android.arouter.core;
 
 import com.alibaba.android.arouter.base.PriorityList;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
-import com.alibaba.android.arouter.facade.template.IMultiImplementsRegister;
+import com.alibaba.android.arouter.facade.template.IMultiImplementRegister;
 
-class MultiImplmentsRegister implements IMultiImplementsRegister {
+class MultiImplmentsRegister implements IMultiImplementRegister {
     public static MultiImplmentsRegister getInstance() {
         return HOLDER.instance;
     }

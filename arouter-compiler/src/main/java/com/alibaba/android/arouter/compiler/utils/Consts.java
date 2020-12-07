@@ -19,6 +19,7 @@ public class Consts {
     public static final String NAME_OF_PROVIDER = PROJECT + SEPARATOR + "Providers";
     public static final String NAME_OF_GROUP = PROJECT + SEPARATOR + "Group" + SEPARATOR;
     public static final String NAME_OF_INTERCEPTOR = PROJECT + SEPARATOR + "Interceptors";
+    public static final String NAME_OF_MULTIIMPLEMENT = PROJECT + SEPARATOR + "MultiImplement";
     public static final String NAME_OF_AUTOWIRED = SEPARATOR + PROJECT + SEPARATOR + "Autowired";
 
 
@@ -61,9 +62,11 @@ public class Consts {
     public static final String IPROVIDER_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IProviderGroup";
     public static final String IINTERCEPTOR = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IInterceptor";
     public static final String IINTERCEPTOR_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IInterceptorGroup";
+    public static final String MULTIIMPLEMENT_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMultiImplementGroup";
     public static final String ITROUTE_ROOT = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IRouteRoot";
     public static final String IROUTE_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IRouteGroup";
     public static final String ISYRINGE = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".ISyringe";
+    public static final String IMULTIIMPLEMENTREGISTER = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMultiImplementRegister";
     public static final String JSON_SERVICE = FACADE_PACKAGE + SERVICE_PACKAGE + ".SerializationService";
     public static final String TYPE_WRAPPER = FACADE_PACKAGE + MODEL_PACKAGE + ".TypeWrapper";
 
@@ -91,4 +94,8 @@ public class Consts {
     public static final String ANNOTATION_TYPE_INTECEPTOR = FACADE_PACKAGE + ".annotation.Interceptor";
     public static final String ANNOTATION_TYPE_ROUTE = FACADE_PACKAGE + ".annotation.Route";
     public static final String ANNOTATION_TYPE_AUTOWIRED = FACADE_PACKAGE + ".annotation.Autowired";
+    public static final String ANNOTATION_TYPE_MULTIIMPLEMENT = FACADE_PACKAGE + ".annotation.MultiImplement";
+    public static final String ANNOTATION_TYPE_TAEGETPATH = FACADE_PACKAGE + ".annotation.TargetPath";
+
+
 }

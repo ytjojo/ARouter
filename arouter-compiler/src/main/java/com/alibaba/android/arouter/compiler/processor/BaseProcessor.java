@@ -42,7 +42,7 @@ import static com.alibaba.android.arouter.compiler.utils.Consts.NO_MODULE_NAME_T
  */
 public abstract class BaseProcessor extends AbstractProcessor {
     Filer mFiler;
-    Logger logger;
+    public static Logger logger;
     Types types;
     Elements elementUtils;
     TypeUtils typeUtils;

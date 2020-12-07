@@ -14,7 +14,7 @@ import com.alibaba.android.arouter.facade.template.AbstractRouteMetaRegister;
 import com.alibaba.android.arouter.facade.template.IDeepLinkMatcher;
 import com.alibaba.android.arouter.facade.template.IInterceptorGroup;
 import com.alibaba.android.arouter.facade.template.IMethodInvoker;
-import com.alibaba.android.arouter.facade.template.IMultiImplementsGroup;
+import com.alibaba.android.arouter.facade.template.IMultiImplementGroup;
 import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
 import com.alibaba.android.arouter.facade.template.IProvider;
 import com.alibaba.android.arouter.facade.template.IProviderGroup;
@@ -96,8 +96,8 @@ public class LogisticsCenter {
                     registerProvider((IProviderGroup) obj);
                 } else if (obj instanceof IInterceptorGroup) {
                     registerInterceptor((IInterceptorGroup) obj);
-                } else if (obj instanceof IMultiImplementsGroup) {
-                    registerMultiImplements((IMultiImplementsGroup) obj);
+                } else if (obj instanceof IMultiImplementGroup) {
+                    registerMultiImplements((IMultiImplementGroup) obj);
                 } else if (obj instanceof ITemplateGroup) {
                     registerTemplate((ITemplateGroup) obj);
                 } else {
@@ -576,7 +576,7 @@ public class LogisticsCenter {
         Warehouse.routes.put(paramString, paramRouteMeta);
     }
 
-    private static void registerMultiImplements(IMultiImplementsGroup multiImplementsGroup) {
+    private static void registerMultiImplements(IMultiImplementGroup multiImplementsGroup) {
         markRegisteredByPlugin();
         if (multiImplementsGroup != null) {
             multiImplementsGroup.loadInto(MultiImplmentsRegister.getInstance());
