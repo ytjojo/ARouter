@@ -173,7 +173,10 @@ public class AutowiredProcessor extends BaseProcessor {
                             fieldConfig.name() : element.getSimpleName().toString();
                     String originalValue = "substitute." + fieldName;
                     String statement = "substitute." + fieldName + " = " + buildCastCode(element) + "extras.";
-                    int exchangeType = typeUtils.typeExchange(element);
+                    int exchangeType = typeUtils.typeExchange(element.asType());
+                    if(fieldName.equals("map")){
+                        logger.info(exchangeType + "exchangeType" + TypeKind.values()[exchangeType]);
+                    }
                     statement = buildStatement(originalValue, statement, exchangeType, isKtClass(parent));
                     if (statement.startsWith("serializationService.")) {   // Not mortals
                         injectMethodBuilder.beginControlFlow("if (null != serializationService && $T.containsKey(extras, $S))", extraUtils, fieldName);
@@ -266,7 +269,7 @@ public class AutowiredProcessor extends BaseProcessor {
     }
 
     private String buildCastCode(Element element) {
-        if (typeUtils.typeExchange(element) == TypeKind.SERIALIZABLE.ordinal()) {
+        if (typeUtils.typeExchange(element.asType()) == TypeKind.SERIALIZABLE.ordinal()) {
             return CodeBlock.builder().add("($T) ", ClassName.get(element.asType())).build().toString();
         }
         return "";

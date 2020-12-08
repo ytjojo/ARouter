@@ -63,7 +63,6 @@ final class MoreAnnotationMirrors {
      */
     static ImmutableList<AnnotationValue> asAnnotationValues(
             AnnotationValue annotationValue) {
-        BaseProcessor.logger.info(annotationValue.toString()+"___________________________________");
         if (annotationValue.getValue() instanceof List) {
             return annotationValue.accept(AS_ANNOTATION_VALUES, null);
         } else {

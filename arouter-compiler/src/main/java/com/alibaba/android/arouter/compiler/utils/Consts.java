@@ -39,6 +39,12 @@ public class Consts {
     public static final String PARCELABLE = "android.os.Parcelable";
     public static final String BUNDLE = "android.os.Bundle";
     public static final String POSTCARD = "com.alibaba.android.arouter.facade.Postcard";
+    public static final String CONTEXT = "android.content.Context";
+    public static final String URI = "android.net.Uri";
+    public static final String INTENT = "android.content.Intent";
+
+
+    public static final String NAVIGATIONCALLBACK = "com.alibaba.android.arouter.facade.callback.NavigationCallback";
 
     // Java type
     private static final String LANG = "java.lang";
@@ -66,6 +72,7 @@ public class Consts {
     public static final String ITROUTE_ROOT = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IRouteRoot";
     public static final String IROUTE_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IRouteGroup";
     public static final String ISYRINGE = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".ISyringe";
+    public static final String IMETHODERINVOKER = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMethodInvoker";
     public static final String IMULTIIMPLEMENTREGISTER = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMultiImplementRegister";
     public static final String JSON_SERVICE = FACADE_PACKAGE + SERVICE_PACKAGE + ".SerializationService";
     public static final String TYPE_WRAPPER = FACADE_PACKAGE + MODEL_PACKAGE + ".TypeWrapper";

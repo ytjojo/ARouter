@@ -21,9 +21,7 @@ public enum TypeKind {
 
     STRING("String"),
     CHARSEQUENCE("CharSequence"),
-    SERIALIZABLE("Serializable"),
-    PARCELABLE("Parcelable"),
-    OBJECT("Object"),
+
     BYTEARRAY("ByteArray"),
     SHORTARRAY("ShortArray"),
     CHARARRAY("CharArray"),
@@ -32,11 +30,13 @@ public enum TypeKind {
     CHARSEQUENCEARRAYLIST("CharSequenceArrayList"),
     FLOATARRAY("FloatArray"),
     INTEGERARRAYLIST("IntegerArrayList"),
-
+    STRINGARRAYLIST("StringArrayList"),
+    SERIALIZABLE("Serializable"),
+    PARCELABLE("Parcelable"),
+    OBJECT("Object"),
     PARCELABLEARRAYLIST("ParcelableArrayList"),
-
-    SPARSEPARCELABLEARRAY("SparseParcelableArray"),
-    STRINGARRAYLIST("StringArrayList");
+    SPARSEPARCELABLEARRAY("SparseParcelableArray")
+    ;
 
     private String statement;
 

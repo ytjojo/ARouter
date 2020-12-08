@@ -6,5 +6,5 @@ import android.support.annotation.Nullable;
 import com.alibaba.android.arouter.facade.Postcard;
 
 public interface IMethodInvoker {
-  Object invoke(@Nullable Context paramContext, @NonNull Postcard postcard);
+  Object invoke(@Nullable Context context, @NonNull Postcard postcard);
 }

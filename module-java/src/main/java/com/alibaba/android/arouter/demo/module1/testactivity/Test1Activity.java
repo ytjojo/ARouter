@@ -1,6 +1,9 @@
 package com.alibaba.android.arouter.demo.module1.testactivity;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.SparseArray;
 import android.widget.TextView;
 
@@ -12,9 +15,12 @@ import com.alibaba.android.arouter.demo.service.model.TestObj;
 import com.alibaba.android.arouter.demo.service.model.TestParcelable;
 import com.alibaba.android.arouter.demo.service.model.TestSerializable;
 import com.alibaba.android.arouter.facade.annotation.Autowired;
+import com.alibaba.android.arouter.facade.annotation.Query;
 import com.alibaba.android.arouter.facade.annotation.Route;
+import com.alibaba.android.arouter.facade.service.SerializationService;
 import com.alibaba.android.arouter.launcher.ARouter;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -145,5 +151,49 @@ public class Test1Activity extends BaseActivity {
 
         ((TextView) findViewById(R.id.test)).setText("I am " + Test1Activity.class.getName());
         ((TextView) findViewById(R.id.test2)).setText(params);
+    }
+
+
+    @Route(path = "/test/getintent")
+    public static Intent getIntent(Context context, String name, Integer height, long high, Boolean girl, Byte byteFlag, short shortFlag, @Query("age") int age, char ch, float fl, double dou, TestSerializable ser, TestParcelable pac, CharSequence charSequence, byte[] bytes, CharSequence[] charSequenceArray, char[] charArray, short[] sh, float[] floats, SparseArray<TestParcelable> sparseArrays, ArrayList<Integer> integerArrayList, ArrayList<CharSequence> charSequenceArrayList, ArrayList<String> shortArray, ArrayList<TestParcelable> parcelables, Map<String, List<TestObj>> map) {
+        Intent intent = new Intent(context, Test1Activity.class);
+        intent.putExtra("name", name);
+        intent.putExtra("girl",girl);
+        intent.putExtra("age", age);
+        intent.putExtra("byteFlag", byteFlag);
+        intent.putExtra("height", height);
+        intent.putExtra("long",high);
+        intent.putExtra("ch", ch);
+        intent.putExtra("fl", fl);
+        intent.putExtra("dou", dou);
+        intent.putExtra("shortFlag", shortFlag);
+        intent.putExtra("ser", (Serializable) ser);
+        intent.putExtra("pac", (Parcelable)pac);
+        intent.putExtra("charSequence", charSequence);
+        intent.putExtra("bytes", bytes);
+        intent.putExtra("charSequenceArray", charSequenceArray);
+        intent.putExtra("charArray", charArray);
+        intent.putExtra("shortArray", sh);
+        intent.putExtra("floats", floats);
+        intent.putIntegerArrayListExtra("integerArrayList", integerArrayList);
+        intent.putStringArrayListExtra("shortArray", shortArray);
+        intent.putCharSequenceArrayListExtra("charSequenceArrayList", charSequenceArrayList);
+        intent.putParcelableArrayListExtra("parcelables", parcelables);
+        intent.getExtras().putSparseParcelableArray("sparseArrays", sparseArrays);
+        intent.putExtra("map", ((SerializationService)ARouter.getInstance().navigation(SerializationService.class)).object2Json(map));
+        return intent;
+    }
+
+    @Route(path = "/test/getintent1")
+    public static Intent getIntent1(Context context, TestSerializable ser, TestParcelable pac, CharSequence charSequence, SparseArray<TestParcelable> sparseArrays, ArrayList<Integer> integerArrayList, ArrayList<TestParcelable> parcelables, Map<String, List<TestObj>> map) {
+        Intent intent = new Intent(context, Test1Activity.class);
+        intent.putExtra("ser", (Serializable) ser);
+        intent.putExtra("pac", (Parcelable)pac);
+        intent.putExtra("charSequence", charSequence);
+        intent.putIntegerArrayListExtra("integerArrayList", integerArrayList);
+        intent.putParcelableArrayListExtra("parcelables", parcelables);
+        intent.getExtras().putSparseParcelableArray("sparseArrays", sparseArrays);
+        intent.putExtra("map", ((SerializationService)ARouter.getInstance().navigation(SerializationService.class)).object2Json(map));
+        return intent;
     }
 }

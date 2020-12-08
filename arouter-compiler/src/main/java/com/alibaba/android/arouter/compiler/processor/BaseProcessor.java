@@ -41,11 +41,11 @@ import static com.alibaba.android.arouter.compiler.utils.Consts.NO_MODULE_NAME_T
  * @since 2019-03-01 12:31
  */
 public abstract class BaseProcessor extends AbstractProcessor {
-    Filer mFiler;
+    public Filer mFiler;
     public static Logger logger;
-    Types types;
-    Elements elementUtils;
-    TypeUtils typeUtils;
+    public Types types;
+    public Elements elementUtils;
+    public TypeUtils typeUtils;
     // Module name, maybe its 'app' or others
     String moduleName = null;
     // If need generate router doc
