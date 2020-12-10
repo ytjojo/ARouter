@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Target({ ElementType.PARAMETER})
 public @interface Query {
   String value();
 }

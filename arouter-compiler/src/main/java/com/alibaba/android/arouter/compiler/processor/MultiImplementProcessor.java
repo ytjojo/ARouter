@@ -5,45 +5,28 @@ import com.alibaba.android.arouter.compiler.utils.Consts;
 import com.alibaba.android.arouter.facade.annotation.MultiImplement;
 import com.alibaba.android.arouter.facade.enums.RouteType;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
-import com.google.auto.common.AnnotationMirrors;
-import com.google.auto.common.AnnotationValues;
-import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
-import com.google.common.base.Optional;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.WildcardTypeName;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleAnnotationValueVisitor7;
 
 import static com.alibaba.android.arouter.compiler.utils.Consts.ANNOTATION_TYPE_MULTIIMPLEMENT;
-import static com.alibaba.android.arouter.compiler.utils.Consts.IINTERCEPTOR;
-import static com.alibaba.android.arouter.compiler.utils.Consts.IINTERCEPTOR_GROUP;
 import static com.alibaba.android.arouter.compiler.utils.Consts.METHOD_LOAD_INTO;
-import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_INTERCEPTOR;
 import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_MULTIIMPLEMENT;
 import static com.alibaba.android.arouter.compiler.utils.Consts.PACKAGE_OF_GENERATE_FILE;
 import static com.alibaba.android.arouter.compiler.utils.Consts.SEPARATOR;
@@ -64,7 +47,7 @@ public class MultiImplementProcessor extends BaseProcessor {
         if (CollectionUtils.isNotEmpty(annotations)) {
             Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(MultiImplement.class);
             try {
-                parseInterceptors(elements);
+                parseAnnotations(elements);
             } catch (Exception e) {
                 logger.error(e);
             }
@@ -79,7 +62,7 @@ public class MultiImplementProcessor extends BaseProcessor {
      *
      * @param elements elements of tollgate.
      */
-    private void parseInterceptors(Set<? extends Element> elements) throws IOException {
+    private void parseAnnotations(Set<? extends Element> elements) throws IOException {
         if (CollectionUtils.isNotEmpty(elements)) {
             logger.info(">>> Found interceptors, size is " + elements.size() + " <<<");
 

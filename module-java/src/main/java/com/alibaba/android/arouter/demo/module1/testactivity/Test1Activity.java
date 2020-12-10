@@ -63,7 +63,7 @@ public class Test1Activity extends BaseActivity {
     @Autowired
     Map<String, List<TestObj>> map;
 
-    private long high;
+    public long high;
 
     @Autowired
     String url;
@@ -155,10 +155,10 @@ public class Test1Activity extends BaseActivity {
 
 
     @Route(path = "/test/getintent")
-    public static Intent getIntent(Context context, String name, Integer height, long high, Boolean girl, Byte byteFlag, short shortFlag, @Query("age") int age, char ch, float fl, double dou, TestSerializable ser, TestParcelable pac, CharSequence charSequence, byte[] bytes, CharSequence[] charSequenceArray, char[] charArray, short[] sh, float[] floats, SparseArray<TestParcelable> sparseArrays, ArrayList<Integer> integerArrayList, ArrayList<CharSequence> charSequenceArrayList, ArrayList<String> shortArray, ArrayList<TestParcelable> parcelables, Map<String, List<TestObj>> map) {
+    public static Intent getIntent(Context context,@Query("name") String name, Integer height, long high,@Query("sex") Boolean girl, Byte byteFlag, short shortFlag, @Query("age") int age, char ch, float fl, double dou, TestSerializable ser, TestParcelable pac, CharSequence charSequence, byte[] bytes, CharSequence[] charSequenceArray, char[] charArray, short[] sh, float[] floats, SparseArray<TestParcelable> sparseArrays, ArrayList<Integer> integerArrayList, ArrayList<CharSequence> charSequenceArrayList, ArrayList<String> shortArray, ArrayList<TestParcelable> parcelables, Map<String, List<TestObj>> map) {
         Intent intent = new Intent(context, Test1Activity.class);
         intent.putExtra("name", name);
-        intent.putExtra("girl",girl);
+        intent.putExtra("boy",girl);
         intent.putExtra("age", age);
         intent.putExtra("byteFlag", byteFlag);
         intent.putExtra("height", height);

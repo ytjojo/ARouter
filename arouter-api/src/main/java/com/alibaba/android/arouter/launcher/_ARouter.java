@@ -339,7 +339,9 @@ final class _ARouter {
             callback.onFound(postcard);
         }
         GlobleCallbackNotifer.onFound(postcard);
-
+        if(postcard.isForIntent()){
+            return postcard.buildIntent(postcard.getContext());
+        }
         if (!postcard.isGreenChannel()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
             interceptorService.doInterceptions(postcard, new InterceptorCallback() {
                 /**

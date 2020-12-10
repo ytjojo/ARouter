@@ -19,7 +19,8 @@ public class Consts {
     public static final String NAME_OF_PROVIDER = PROJECT + SEPARATOR + "Providers";
     public static final String NAME_OF_GROUP = PROJECT + SEPARATOR + "Group" + SEPARATOR;
     public static final String NAME_OF_INTERCEPTOR = PROJECT + SEPARATOR + "Interceptors";
-    public static final String NAME_OF_MULTIIMPLEMENT = PROJECT + SEPARATOR + "MultiImplement";
+    public static final String NAME_OF_MULTIIMPLEMENT = PROJECT + SEPARATOR + "MultiImplements";
+    public static final String NAME_OF_TEMPLATE = PROJECT + SEPARATOR + "Templates";
     public static final String NAME_OF_AUTOWIRED = SEPARATOR + PROJECT + SEPARATOR + "Autowired";
 
 
@@ -42,6 +43,8 @@ public class Consts {
     public static final String CONTEXT = "android.content.Context";
     public static final String URI = "android.net.Uri";
     public static final String INTENT = "android.content.Intent";
+    public static final String AROUTER = "com.alibaba.android.arouter.launcher.ARouter";
+
 
 
     public static final String NAVIGATIONCALLBACK = "com.alibaba.android.arouter.facade.callback.NavigationCallback";
@@ -71,6 +74,7 @@ public class Consts {
     public static final String MULTIIMPLEMENT_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMultiImplementGroup";
     public static final String ITROUTE_ROOT = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IRouteRoot";
     public static final String IROUTE_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IRouteGroup";
+    public static final String TEMPLATE_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".ITemplateGroup";
     public static final String ISYRINGE = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".ISyringe";
     public static final String IMETHODERINVOKER = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMethodInvoker";
     public static final String IMULTIIMPLEMENTREGISTER = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMultiImplementRegister";

@@ -198,7 +198,6 @@ public class RouteProcessor extends BaseProcessor {
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .addParameter(rootParamSpec);
-            int methodCount = 0;
             //  Follow a sequence, find out metas of group first, generate java file, then statistics them as root.
             for (Element element : routeElements) {
                 TypeMirror tm = element.asType();
@@ -209,7 +208,6 @@ public class RouteProcessor extends BaseProcessor {
                     if (element.getKind() == ElementKind.METHOD) {
                         if (executable.getModifiers().contains(PUBLIC) && executable.getModifiers().contains(STATIC)) {
                             routeMeta = new RouteMeta(route, executable, RouteType.METHOD, null);
-                            methodCount++;
                         } else {
                             throw new RuntimeException("The @Route is marked on unsupported class, look at [" + tm.toString() + "].");
                         }
@@ -217,7 +215,6 @@ public class RouteProcessor extends BaseProcessor {
                     } else if (element.getKind() == ElementKind.CONSTRUCTOR) {
                         if (executable.getModifiers().contains(PUBLIC)) {
                             routeMeta = new RouteMeta(route, executable, RouteType.METHOD, null);
-                            methodCount++;
                         } else {
                             throw new RuntimeException("The @Route is marked on unsupported class, look at [" + tm.toString() + "].");
                         }

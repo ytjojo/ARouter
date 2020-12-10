@@ -71,6 +71,8 @@ public final class Postcard extends RouteMeta {
 
     private int requestCode = -1;
 
+    private boolean isForIntent;
+
 
 
     public Bundle getOptionsBundle() {
@@ -663,6 +665,10 @@ public final class Postcard extends RouteMeta {
         return (uri == null) ? this.uri : uri;
     }
 
+    public void withIntentData(Uri uri){
+        this.intentData = uri;
+    }
+
     public Class<?> getKeyClass() {
         return this.keyClass;
     }
@@ -773,6 +779,15 @@ public final class Postcard extends RouteMeta {
         this.action = action;
         return this;
     }
+
+    public Postcard setForIntent(){
+        isForIntent = true;
+        return this;
+    }
+    public boolean isForIntent(){
+        return isForIntent;
+    }
+
 
 
 }
