@@ -278,6 +278,8 @@ public class LogisticsCenter {
                     postcard.setProvider(instance);
                     postcard.greenChannel();    // Provider should skip all of interceptors
                     break;
+                case METHOD:
+                    postcard.greenChannel();
                 case FRAGMENT:
                     postcard.greenChannel();    // Fragment needn't interceptors
                 default:
@@ -391,25 +393,12 @@ public class LogisticsCenter {
 
     private static RouteMeta findRouteMeta(Postcard postcard) {
         RouteMeta routeMeta = null;
-        List<IDeepLinkMatcher> deepLinkMatchers = ARouter.getInstance().getMultiImplements(IDeepLinkMatcher.class);
-        if (!CollectionUtils.isEmpty(deepLinkMatchers)) {
-            for (IDeepLinkMatcher deepLinkMatcher : deepLinkMatchers) {
-                if (postcard.getUri() == null) {
-                    routeMeta = deepLinkMatcher.findMatch(postcard.getPath(), Warehouse.routes);
-                } else {
-                    routeMeta = deepLinkMatcher.findMatch(postcard.getUri(), Warehouse.pathMappings, Warehouse.routes);
-                }
-                if (routeMeta == null) {
-                    return routeMeta;
-                }
-            }
-        }
-        routeMeta = Warehouse.routes.get(postcard.getPath());
+        routeMeta = findBykey(postcard);
         if (routeMeta != null) {
             return routeMeta;
         }
         if (loadByGroup(postcard.getGroup())) {
-            routeMeta = findRouteMeta(postcard);
+            routeMeta = findBykey(postcard);
             if (routeMeta != null) {
                 return routeMeta;
             }
@@ -417,6 +406,26 @@ public class LogisticsCenter {
         if (!Warehouse.groupsIndex.isEmpty()) {
             loadAllGroup();
         }
+        routeMeta = findBykey(postcard);
+        if (routeMeta != null) {
+            return routeMeta;
+        }
+        List<IDeepLinkMatcher> deepLinkMatchers = ARouter.getInstance().getMultiImplements(IDeepLinkMatcher.class);
+        if (!CollectionUtils.isEmpty(deepLinkMatchers)) {
+            for (IDeepLinkMatcher deepLinkMatcher : deepLinkMatchers) {
+                routeMeta = deepLinkMatcher.findMatch(postcard.getUri(), Warehouse.pathMappings, Warehouse.routes);
+                if (routeMeta != null) {
+                    return routeMeta;
+                }
+            }
+        }
+        return findByRegex(postcard);
+    }
+    private static RouteMeta findBykey(Postcard postcard){
+        return Warehouse.routes.get(postcard.getPath());
+    }
+
+    private static RouteMeta findByRegex(Postcard postcard){
         if (!Warehouse.pathMappings.isEmpty() && postcard.getUri() != null) {
             PriorityList<DeepLinkUri> priorityList = new PriorityList();
             for (Map.Entry<String, DeepLinkUri> entry : Warehouse.pathMappings.entrySet()) {
@@ -431,8 +440,9 @@ public class LogisticsCenter {
                 return deepLinkUri.getRouteMeta();
             }
         }
-        return routeMeta;
+        return null;
     }
+
 
     public static IMethodInvoker getIInvokeMethod(Class<IMethodInvoker> clazz) {
         IMethodInvoker iMethodInvoker = Warehouse.methodInvoker.get(clazz);
@@ -448,7 +458,7 @@ public class LogisticsCenter {
     }
 
     public static <T> List<T> getMultiImplements(Class<? extends T> clazz) {
-        List<T> list = Warehouse.multImplmentsIntances.get(clazz);
+        List<T> list = (List<T>) Warehouse.multImplmentsIntances.get(clazz);
         if (list == null) {
             PriorityList<T> priorityList = new PriorityList();
             List<RouteMeta> routeMetas = Warehouse.multImplments.get(clazz);
@@ -565,7 +575,6 @@ public class LogisticsCenter {
                 RouteMeta routeMeta = entry.getValue();
                 addRouteMeta(path, routeMeta);
             }
-            Warehouse.routes.putAll(groupRoutes);
             return true;
         } catch (Exception exception) {
             throw new HandlerException(exception.toString());

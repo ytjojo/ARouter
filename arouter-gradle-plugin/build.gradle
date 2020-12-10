@@ -1,4 +1,5 @@
 apply plugin: 'groovy'
+apply plugin: 'maven'
 
 ext {
     bintrayName = 'arouter-register'
@@ -17,5 +18,15 @@ dependencies {
     compile 'com.android.tools.build:gradle:3.4.0'
 }
 
-apply from: '../install.gradle'
-apply from: '../bintray.gradle'
+//apply from: '../install.gradle'
+//apply from: '../bintray.gradle'
+
+uploadArchives {
+    repositories.mavenDeployer {
+        repository(url: uri('../repo')) {
+        }
+        pom.version="1.0.3"
+        pom.artifactId=artifact
+        pom.groupId=publishedGroupId
+    }
+}

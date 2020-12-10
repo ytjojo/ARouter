@@ -15,6 +15,8 @@ import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 
+import static android.webkit.WebSettings.LOAD_DEFAULT;
+
 @Route(path = "/test/globlewebview", priority = 1, secondaryPathes = {"https://", "http://"})
 public class WebViewActivity extends AppCompatActivity {
     @Autowired
@@ -62,5 +64,6 @@ public class WebViewActivity extends AppCompatActivity {
         webSettings.setSupportZoom(true);
         webSettings.setBuiltInZoomControls(true);
         webSettings.setDisplayZoomControls(false);
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
     }
 }

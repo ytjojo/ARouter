@@ -1,5 +1,6 @@
 package com.alibaba.android.arouter.demo;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -12,6 +13,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.alibaba.android.arouter.demo.module1.testactivity.TestDynamicActivity;
+import com.alibaba.android.arouter.demo.module1.testmultiimplament.IModuleLifecycle;
+import com.alibaba.android.arouter.demo.module1.testtemplate.ITestNavigator;
 import com.alibaba.android.arouter.demo.service.model.TestObj;
 import com.alibaba.android.arouter.demo.service.model.TestParcelable;
 import com.alibaba.android.arouter.demo.service.model.TestSerializable;
@@ -193,7 +196,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ARouter.getInstance().navigation(SingleService.class).sayHello("Mike");
                 break;
             case R.id.failNav2:
+
                 ARouter.getInstance().build("/xxx/xxx").navigation();
+                break;
+            case R.id.failNavmodule:
+                ARouter.getInstance().build("/test/xxx").navigation();
+                break;
+            case R.id.failNavtest:
+                ARouter.getInstance().build("/module/xxx").navigation();
                 break;
             case R.id.failNav3:
                 ARouter.getInstance().navigation(MainActivity.class);
@@ -242,6 +252,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .withObject("obj", testObj)
                         .withObject("objList", objList)
                         .withObject("map", map).navigation(this);
+                break;
+            case 0:
+                TestSerializable testSerializable1 = new TestSerializable("Titanic", 555);
+                TestParcelable testParcelable1 = new TestParcelable("jack", 666);
+                testObj = new TestObj("Rose", 777);
+                ArrayList<TestObj> arrayList = new ArrayList<TestObj>();
+                arrayList.add(testObj);
+                HashMap<Object, Object> hashMap = new HashMap<Object, Object>();
+                hashMap.put("testMap", arrayList);
+                ARouter.getInstance().build("/test/activity1").withString("name", "老王").withInt("age", 18).withBoolean("boy", true).withLong("high", 180L).withString("url", "https://a.b.c").withSerializable("ser", testSerializable1).withParcelable("pac", testParcelable1).withObject("obj", testObj).withObject("objList", arrayList).withObject("map", hashMap).navigation();
+                break;
+            case R.id.getMultiImplament:
+               List<IModuleLifecycle> list = ARouter.getInstance().getMultiImplements(IModuleLifecycle.class);
+                StringBuilder stringBuilder1 = new StringBuilder();
+                for (IModuleLifecycle iModuleLifecycle : list) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append(iModuleLifecycle.getClass().getSimpleName());
+                    stringBuilder.append("    ");
+                    stringBuilder.append(iModuleLifecycle.getPrioriry());
+                    stringBuilder.append("  ");
+                    stringBuilder1.append(stringBuilder.toString());
+                }
+                Toast.makeText(getApplicationContext(), stringBuilder1.toString(), Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.staticMethodrouter:
+
+                TestSerializable testSerializable2 = new TestSerializable("Titanic", 555);
+                TestParcelable testParcelable2 = new TestParcelable("jack", 666);
+                testObj = new TestObj("Rose", 777);
+                arrayList = new ArrayList();
+                arrayList.add(testObj);
+                hashMap = new HashMap<Object, Object>();
+                hashMap.put("testMap", arrayList);
+                startActivity((Intent)ARouter.getInstance().build("/test/getintent").withString("name","老王").withInt("age", 18).withBoolean("boy", true).withLong("high", 180000L).withString("url", "https://a.b.c").withSerializable("ser", testSerializable2).withParcelable("pac", testParcelable2).withObject("obj", testObj).withObject("objList", arrayList).withObject("map", hashMap).navigation());
+                break;
+            case R.id.constructorrouter:
+               Dialog dialog = (Dialog) ARouter.getInstance().build("/test/dialog").withString("content","hello,这是我的内容").navigation(this);
+               dialog.show();
+                break;
+            case R.id.startwebview:
+                ARouter.getInstance().build(Uri.parse("https://github.com/ansen666/Webview?abc=111&name=ssss")).withIntentData(Uri.parse("https://github.com/ansen666/Webview")).navigation(this);
+                break;
+            case R.id.startTest4:
+                ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322/")).navigation(this);
+                break;
+            case R.id.templateTest2:
+                Intent intent = ARouter.getInstance().navigationWithtemplate(ITestNavigator.class).navigateTest2(this,"hello world");
+                startActivity(intent);
                 break;
             default:
                 break;

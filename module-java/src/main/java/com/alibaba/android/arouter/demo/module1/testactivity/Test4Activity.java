@@ -8,6 +8,9 @@ import android.widget.TextView;
 import com.alibaba.android.arouter.demo.module1.R;
 import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
+import com.alibaba.android.arouter.launcher.ARouter;
+
+import java.util.ArrayList;
 
 @Route(path = "/test/activity4", priority = 100, secondaryPathes = {"/test/home/pro<name>/<extra>/<id>"})
 public class Test4Activity extends AppCompatActivity {
@@ -25,7 +28,8 @@ public class Test4Activity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test1);
-
+        ARouter.getInstance().inject(this);
+        ArrayList<String> keys = getIntent().getExtras().getStringArrayList(ARouter.AUTO_INJECT_PLACEHOLDERS);
         ((TextView) findViewById(R.id.test)).setText("I am " + Test4Activity.class.getName());
         String extra = getIntent().getStringExtra("extra");
         StringBuilder stringBuilder = new StringBuilder();
@@ -35,6 +39,9 @@ public class Test4Activity extends AppCompatActivity {
         stringBuilder.append(this.name);
         stringBuilder.append("  id = ");
         stringBuilder.append(this.id);
+        for(String key : keys){
+            stringBuilder.append("\n øØkey  =" +key );
+        }
         if (!TextUtils.isEmpty(extra)) {
             ((TextView) findViewById(R.id.test2)).setText(stringBuilder.toString());
         }

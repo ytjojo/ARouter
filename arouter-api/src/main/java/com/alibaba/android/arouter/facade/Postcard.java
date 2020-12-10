@@ -665,8 +665,9 @@ public final class Postcard extends RouteMeta {
         return (uri == null) ? this.uri : uri;
     }
 
-    public void withIntentData(Uri uri){
+    public Postcard withIntentData(Uri uri){
         this.intentData = uri;
+        return this;
     }
 
     public Class<?> getKeyClass() {

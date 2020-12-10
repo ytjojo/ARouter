@@ -34,15 +34,15 @@ class Warehouse {
     static Map<Integer, Class<? extends IInterceptor>> interceptorsIndex = new UniqueKeyTreeMap<>("More than one interceptors use same priority [%s]");
     static List<IInterceptor> interceptors = new ArrayList<>();
 
-    static Map<Class, IMethodInvoker> methodInvoker;
+    static Map<Class, IMethodInvoker> methodInvoker = new HashMap<>();
 
-    static Map<Class, PriorityList<RouteMeta>> multImplments;
+    static Map<Class, PriorityList<RouteMeta>> multImplments = new HashMap<>();
 
-    static Map<Class, List> multImplmentsIntances;
+    static Map<Class, List> multImplmentsIntances = new HashMap<>();
 
-    static Map<String, DeepLinkUri> pathMappings;
+    static Map<String, DeepLinkUri> pathMappings = new HashMap<>();
 
-    static Map<Class, Class> templates;
+    static Map<Class, Class> templates = new HashMap<>();
 
 
     static void clear() {

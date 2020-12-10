@@ -9,6 +9,7 @@ class MultiImplmentsRegister implements IMultiImplementRegister {
         return HOLDER.instance;
     }
 
+    @Override
     public void add(Class<?> keyClass, RouteMeta routeMeta) {
         if (!Warehouse.multImplments.containsKey(keyClass)) {
             Warehouse.multImplments.put(keyClass, new PriorityList());
