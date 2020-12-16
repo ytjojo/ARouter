@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
@@ -17,6 +18,7 @@ import com.alibaba.android.arouter.core.LogisticsCenter;
 import com.alibaba.android.arouter.exception.HandlerException;
 import com.alibaba.android.arouter.exception.InitException;
 import com.alibaba.android.arouter.exception.NoRouteFoundException;
+import com.alibaba.android.arouter.facade.InterceptorResult;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.callback.InterceptorCallback;
 import com.alibaba.android.arouter.facade.callback.NavigationCallback;
@@ -322,9 +324,9 @@ final class _ARouter {
             } else {
                 // No callback for this invoke, then we use the global degrade service.
                 List<DegradeService> degradeSevices = ARouter.getInstance().getMultiImplements(DegradeService.class);
-                if(!CollectionUtils.isEmpty(degradeSevices)){
-                    for(DegradeService degradeService :degradeSevices){
-                        if(degradeService.onLost(postcard.getContext(),postcard)){
+                if (!CollectionUtils.isEmpty(degradeSevices)) {
+                    for (DegradeService degradeService : degradeSevices) {
+                        if (degradeService.onLost(postcard.getContext(), postcard)) {
                             break;
                         }
                     }
@@ -339,8 +341,8 @@ final class _ARouter {
             callback.onFound(postcard);
         }
         GlobleCallbackNotifer.onFound(postcard);
-        if(postcard.isForIntent()){
-            return postcard.buildIntent(postcard.getContext());
+        if (postcard.isForIntent()) {
+            postcard.greenChannel();
         }
         if (!postcard.isGreenChannel()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
             interceptorService.doInterceptions(postcard, new InterceptorCallback() {
@@ -367,12 +369,16 @@ final class _ARouter {
                  */
                 @Override
                 public void onInterrupt(Throwable exception) {
-                    if (!_ARouter.this.isHangUped(postcard)) {
-                        if (callback != null)
-                            callback.onInterrupt(postcard);
+                    if (callback != null) {
+                        callback.onInterrupt(postcard);
                     }
                     GlobleCallbackNotifer.onInterrupt(postcard);
                     logger.info(Consts.TAG, "Navigation failed, termination by interceptor : " + exception.getMessage());
+                }
+
+                @Override
+                public void onHangUp(Postcard postcard) {
+                    logger.info(Consts.TAG, "Navigation failed, termination by interceptor ");
                 }
             });
         } else {
@@ -384,16 +390,22 @@ final class _ARouter {
 
     private Object _navigation(final Postcard postcard, final int requestCode, final NavigationCallback callback) {
 
-        if (!isHangUped(postcard)){
-            LogisticsCenter.getPrivateInterceptors(postcard);
-        }else {
+        if (isHangUped(postcard)) {
             return null;
+        } else {
+            InterceptorResult result = LogisticsCenter.doPrivateInterceptions(postcard);
+            if (result != InterceptorResult.CONTINUE) {
+                return null;
+            }
         }
         final Context currentContext = postcard.getContext();
 
         switch (postcard.getType()) {
             case ACTIVITY:
                 postcard.buildIntent(currentContext);
+                if (postcard.isForIntent()) {
+                    return postcard.getIntent();
+                }
                 // Navigation in main looper.
                 runInMainThread(new Runnable() {
                     @Override
@@ -516,18 +528,18 @@ final class _ARouter {
 
     protected Object invokeMethodInternal(Postcard postcard, NavigationCallback navigationCallback) {
         Context context = postcard.getContext();
-        if (context == null){
+        if (context == null) {
             context = mContext;
         }
-        IMethodInvoker iMethodInvoker = LogisticsCenter.getIInvokeMethod((Class<IMethodInvoker>)postcard.getDestination());
+        IMethodInvoker iMethodInvoker = LogisticsCenter.getIInvokeMethod((Class<IMethodInvoker>) postcard.getDestination());
         LogisticsCenter.getPrivateInterceptors(postcard);
         Object object = iMethodInvoker.invoke(context, postcard);
-        if (navigationCallback != null){
+        if (navigationCallback != null) {
             navigationCallback.onArrival(postcard);
         }
         if (!CollectionUtils.isEmpty(postcard.getPrivateInterceptors())) {
-            for(IPrivateInterceptor interceptor : postcard.getPrivateInterceptors()){
-                interceptor.onArrival(postcard.getContext(),postcard);
+            for (IPrivateInterceptor interceptor : postcard.getPrivateInterceptors()) {
+                interceptor.onArrival(postcard.getContext(), postcard);
             }
         }
         GlobleCallbackNotifer.onArrival(postcard);
@@ -535,11 +547,11 @@ final class _ARouter {
     }
 
     protected void hangUp(String tag, Postcard postcard) {
-        if (postcard == this.mHangUpedPostcards.get(tag)){
+        if (postcard == this.mHangUpedPostcards.get(tag)) {
             return;
         }
         this.mHangUpedPostcards.put(tag, postcard);
-        if (postcard.getNavigationCallback() != null){
+        if (postcard.getNavigationCallback() != null) {
             postcard.getNavigationCallback().onHangUp(postcard);
         }
         GlobleCallbackNotifer.onHangUp(postcard);
@@ -555,7 +567,7 @@ final class _ARouter {
 
     protected <T> T navigationWithTemplate(Class<? extends T> templateClass) {
         try {
-            return (T)LogisticsCenter.buildTemplateImpl(templateClass);
+            return (T) LogisticsCenter.buildTemplateImpl(templateClass);
         } catch (Exception exception) {
             logger.warning("ARouter::", exception.getMessage());
             return null;
@@ -566,15 +578,46 @@ final class _ARouter {
         LogisticsCenter.putRoute(path, routemeta);
     }
 
-    protected void removeHangUp(String tag) {
+    protected boolean removeHangUp(String tag) {
         Postcard postcard = this.mHangUpedPostcards.remove(tag);
-        if (postcard != null && postcard.getNavigationCallback() != null)
+        if (postcard != null) {
+            onInterrupt(null, postcard);
+            return true;
+        }
+        return false;
+
+    }
+
+    protected void onInterrupt(Object exception, Postcard postcard) {
+        if (exception != null) {
+            postcard.setTag(exception);
+        }
+        if (postcard.getNavigationCallback() != null) {
             postcard.getNavigationCallback().onInterrupt(postcard);
+        }
         GlobleCallbackNotifer.onInterrupt(postcard);
     }
 
-    protected void resumeHangUpPostCard(Context context, String tag) {
+    protected void onInterrupt(Object exception, String tag) {
+        if (exception == null) {
+            exception = new HandlerException("No message.");
+        }
+        final Postcard postcard = getHangupPostcard(tag);
+        if (removeHangUp(tag)) {
+            onInterrupt(exception, postcard);
+        }
+    }
+
+    protected Postcard getHangupPostcard(String tag) {
+        return mHangUpedPostcards.get(tag);
+    }
+
+    protected void resumeHangUpPostcard(Context context, String tag) {
         Postcard postcard = this.mHangUpedPostcards.remove(tag);
+        if(postcard == null){
+            logger.error(Consts.TAG,"resumeHangUpPostcard with tag " + tag + " not fonnd");
+            return;
+        }
         navigation(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
     }
 

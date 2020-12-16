@@ -634,7 +634,7 @@ public final class Postcard extends RouteMeta {
             intent.setAction(action);
         }
         setIntent(intent);
-        return this.intent;
+        return getIntent();
     }
 
     @Override
@@ -704,25 +704,12 @@ public final class Postcard extends RouteMeta {
         invokeMethod(null);
     }
 
-    public void invokeMethod(Context postcard) {
-        invokeMethod(postcard, null);
+    public Object invokeMethod(Context postcard) {
+        return invokeMethod(postcard, null);
     }
 
-    public void invokeMethod(Context postcard, NavigationCallback callback) {
-        ARouter.getInstance().invokeMethod(postcard, this, callback);
-    }
-
-    public Object invokeMethodWithReturn() {
-        return invokeMethodWithReturn(null);
-    }
-
-    public Object invokeMethodWithReturn(Context postcard) {
-        return invokeMethodWithReturn(postcard, (NavigationCallback)null);
-    }
-
-    public Object invokeMethodWithReturn(Context context, NavigationCallback paramNavigationCallback) {
-        greenChannel();
-        return ARouter.getInstance().invokeMethod(context, this, paramNavigationCallback);
+    public Object invokeMethod(Context context, NavigationCallback callback) {
+        return ARouter.getInstance().invokeMethod(context, this, callback);
     }
 
 

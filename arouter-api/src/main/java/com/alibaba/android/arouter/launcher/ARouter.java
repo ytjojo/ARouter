@@ -224,6 +224,11 @@ public final class ARouter {
     }
 
     public void resumeHangUpPostCard(Context context, String tag) {
-        _ARouter.getInstance().resumeHangUpPostCard(context, tag);
+        _ARouter.getInstance().resumeHangUpPostcard(context, tag);
     }
+
+    public boolean isHangUped(Postcard postcard) {
+        return _ARouter.getInstance().isHangUped(postcard);
+    }
+
 }

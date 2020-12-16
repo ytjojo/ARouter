@@ -1,14 +1,12 @@
 package com.alibaba.android.arouter.core;
 
 import com.alibaba.android.arouter.base.PriorityList;
+import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
 import com.alibaba.android.arouter.facade.template.IMultiImplementRegister;
 
-class MultiImplmentsRegister implements IMultiImplementRegister {
-    public static MultiImplmentsRegister getInstance() {
-        return HOLDER.instance;
-    }
-
+@Route(path = "/arouter/service/multiimplmentsregister")
+public class MultiImplmentsRegister implements IMultiImplementRegister {
     @Override
     public void add(Class<?> keyClass, RouteMeta routeMeta) {
         if (!Warehouse.multImplments.containsKey(keyClass)) {
@@ -17,7 +15,5 @@ class MultiImplmentsRegister implements IMultiImplementRegister {
         ((PriorityList) Warehouse.multImplments.get(keyClass)).addItem(routeMeta, routeMeta.getPriority());
     }
 
-    private static class HOLDER {
-        static MultiImplmentsRegister instance = new MultiImplmentsRegister();
-    }
+
 }

@@ -285,10 +285,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 arrayList.add(testObj);
                 hashMap = new HashMap<Object, Object>();
                 hashMap.put("testMap", arrayList);
-                startActivity((Intent)ARouter.getInstance().build("/test/getintent").withString("name","老王").withInt("age", 18).withBoolean("boy", true).withLong("high", 180000L).withString("url", "https://a.b.c").withSerializable("ser", testSerializable2).withParcelable("pac", testParcelable2).withObject("obj", testObj).withObject("objList", arrayList).withObject("map", hashMap).navigation());
+                startActivity((Intent)ARouter.getInstance().build("/test/getintent").greenChannel().withString("name","老王").withInt("age", 18).withBoolean("boy", true).withLong("high", 180000L).withString("url", "https://a.b.c").withSerializable("ser", testSerializable2).withParcelable("pac", testParcelable2).withObject("obj", testObj).withObject("objList", arrayList).withObject("map", hashMap).invokeMethod(this));
                 break;
             case R.id.constructorrouter:
-               Dialog dialog = (Dialog) ARouter.getInstance().build("/test/dialog").withString("content","hello,这是我的内容").navigation(this);
+               Dialog dialog = (Dialog) ARouter.getInstance().build("/test/dialog").withString("content","hello,这是我的内容").greenChannel().navigation(this);
                dialog.show();
                 break;
             case R.id.startwebview:

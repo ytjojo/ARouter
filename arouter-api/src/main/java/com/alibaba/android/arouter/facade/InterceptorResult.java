@@ -1,5 +1,5 @@
 package com.alibaba.android.arouter.facade;
 
-enum InterceptoResult {
+public enum InterceptorResult {
   CONTINUE, HANGUP, INTERRUPT;
 }

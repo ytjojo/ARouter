@@ -20,7 +20,7 @@ public class MethodInvokerActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle paramBundle) {
         super.onCreate(paramBundle);
         ARouter.getInstance().inject(this);
-        startActivity((Intent) ARouter.getInstance().build("/test/getintent").invokeMethodWithReturn((Context) this));
+        startActivity((Intent) ARouter.getInstance().build("/test/getintent").invokeMethod((Context) this));
     }
 
     @Route(path = "/test/methodInvoker",interceptors = {Test1Interceptor.class})

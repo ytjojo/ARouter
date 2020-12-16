@@ -24,4 +24,6 @@ public interface InterceptorCallback {
      * @param exception Reson of interrupt.
      */
     void onInterrupt(Throwable exception);
+
+    void onHangUp(Postcard postcard);
 }

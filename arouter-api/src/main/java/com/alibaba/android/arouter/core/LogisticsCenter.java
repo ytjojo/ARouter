@@ -7,6 +7,7 @@ import com.alibaba.android.arouter.base.PriorityList;
 import com.alibaba.android.arouter.exception.HandlerException;
 import com.alibaba.android.arouter.exception.NoRouteFoundException;
 import com.alibaba.android.arouter.facade.DeepLinkUri;
+import com.alibaba.android.arouter.facade.InterceptorResult;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.enums.TypeKind;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
@@ -15,6 +16,7 @@ import com.alibaba.android.arouter.facade.template.IDeepLinkMatcher;
 import com.alibaba.android.arouter.facade.template.IInterceptorGroup;
 import com.alibaba.android.arouter.facade.template.IMethodInvoker;
 import com.alibaba.android.arouter.facade.template.IMultiImplementGroup;
+import com.alibaba.android.arouter.facade.template.IMultiImplementRegister;
 import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
 import com.alibaba.android.arouter.facade.template.IProvider;
 import com.alibaba.android.arouter.facade.template.IProviderGroup;
@@ -279,7 +281,7 @@ public class LogisticsCenter {
                     postcard.greenChannel();    // Provider should skip all of interceptors
                     break;
                 case METHOD:
-                    postcard.greenChannel();
+                    break;
                 case FRAGMENT:
                     postcard.greenChannel();    // Fragment needn't interceptors
                 default:
@@ -384,7 +386,7 @@ public class LogisticsCenter {
 
     public static <T> T buildTemplateImpl(Class<T> templateClass) {
         try {
-            return (T)Warehouse.templates.get(templateClass).getConstructor().newInstance();
+            return (T) Warehouse.templates.get(templateClass).getConstructor().newInstance();
         } catch (Exception e) {
             ARouter.logger.error("ARouter::", "Fetch templateClass instance error, " + TextUtils.formatStackTrace(e.getStackTrace()));
         }
@@ -421,11 +423,12 @@ public class LogisticsCenter {
         }
         return findByRegex(postcard);
     }
-    private static RouteMeta findBykey(Postcard postcard){
+
+    private static RouteMeta findBykey(Postcard postcard) {
         return Warehouse.routes.get(postcard.getPath());
     }
 
-    private static RouteMeta findByRegex(Postcard postcard){
+    private static RouteMeta findByRegex(Postcard postcard) {
         if (!Warehouse.pathMappings.isEmpty() && postcard.getUri() != null) {
             PriorityList<DeepLinkUri> priorityList = new PriorityList();
             for (Map.Entry<String, DeepLinkUri> entry : Warehouse.pathMappings.entrySet()) {
@@ -498,19 +501,26 @@ public class LogisticsCenter {
                 }
                 postcard.setPrivateInterceptors(arrayList);
             }
-            boolean intercepted = false;
-            for (IPrivateInterceptor iPrivateInterceptor : arrayList) {
-                if (!intercepted) {
-                    intercepted |= iPrivateInterceptor.process(postcard.getContext(), postcard);
-                    if (intercepted) {
-                        break;
-                    }
-                }
-            }
-            return arrayList;
         }
         return null;
     }
+
+    public static InterceptorResult doPrivateInterceptions(Postcard postcard) {
+        ArrayList<IPrivateInterceptor> privateInterceptors = getPrivateInterceptors(postcard);
+        if (!CollectionUtils.isEmpty(privateInterceptors)) {
+            for (IPrivateInterceptor iPrivateInterceptor : privateInterceptors) {
+                InterceptorResult result = iPrivateInterceptor.process(postcard.getContext(), postcard);
+                if (result == InterceptorResult.INTERRUPT) {
+                    return InterceptorResult.INTERRUPT;
+                } else if (result == InterceptorResult.HANGUP) {
+                    return InterceptorResult.HANGUP;
+                }
+            }
+            return InterceptorResult.CONTINUE;
+        }
+        return InterceptorResult.CONTINUE;
+    }
+
 
     private static void injectPlaceHolders(Postcard postcard, DeepLinkUri deepLinkUri, String url) {
         Map<String, String> placeHolderValues = deepLinkUri.getPlaceHolderValues(url);
@@ -558,7 +568,7 @@ public class LogisticsCenter {
     }
 
     private static boolean loadByGroup(String group) {
-        if (TextUtils.isEmpty(group)){
+        if (TextUtils.isEmpty(group)) {
             return false;
         }
         Class<? extends IRouteGroup> groupClazz = Warehouse.groupsIndex.get(group);
@@ -581,14 +591,14 @@ public class LogisticsCenter {
         }
     }
 
-    public static void putRoute(String paramString, RouteMeta paramRouteMeta) {
-        Warehouse.routes.put(paramString, paramRouteMeta);
+    public static void putRoute(String path, RouteMeta routemeta) {
+        Warehouse.routes.put(path, routemeta);
     }
 
     private static void registerMultiImplements(IMultiImplementGroup multiImplementsGroup) {
         markRegisteredByPlugin();
         if (multiImplementsGroup != null) {
-            multiImplementsGroup.loadInto(MultiImplmentsRegister.getInstance());
+            multiImplementsGroup.loadInto(ARouter.getInstance().navigation(IMultiImplementRegister.class));
         }
     }
 

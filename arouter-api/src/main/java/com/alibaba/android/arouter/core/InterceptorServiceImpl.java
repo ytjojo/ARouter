@@ -8,6 +8,7 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.facade.callback.InterceptorCallback;
 import com.alibaba.android.arouter.facade.service.InterceptorService;
 import com.alibaba.android.arouter.facade.template.IInterceptor;
+import com.alibaba.android.arouter.launcher.ARouter;
 import com.alibaba.android.arouter.thread.CancelableCountDownLatch;
 import com.alibaba.android.arouter.utils.MapUtils;
 
@@ -47,7 +48,9 @@ public class InterceptorServiceImpl implements InterceptorService {
                     try {
                         _execute(0, interceptorCounter, postcard);
                         interceptorCounter.await(postcard.getTimeout(), TimeUnit.SECONDS);
-                        if (interceptorCounter.getCount() > 0) {    // Cancel the navigation this time, if it hasn't return anythings.
+                        if(ARouter.getInstance().isHangUped(postcard)){
+                            callback.onHangUp(postcard);
+                        }else if (interceptorCounter.getCount() > 0) {    // Cancel the navigation this time, if it hasn't return anythings.
                             callback.onInterrupt(new HandlerException("The interceptor processing timed out."));
                         } else if (null != postcard.getTag()) {    // Maybe some exception in the tag.
                             callback.onInterrupt((Throwable) postcard.getTag());
@@ -94,6 +97,11 @@ public class InterceptorServiceImpl implements InterceptorService {
 //                    if (!Looper.getMainLooper().equals(Looper.myLooper())) {    // You shouldn't throw the exception if the thread is main thread.
 //                        throw new HandlerException(exception.getMessage());
 //                    }
+                }
+
+                @Override
+                public void onHangUp(Postcard postcard) {
+                    counter.cancel();
                 }
             });
         }
