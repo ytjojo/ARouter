@@ -13,7 +13,7 @@ import java.util.Map;
 public abstract class AbstractRouteMetaRegister {
 
 
-    protected RouteMeta buildActivity( String path,Class<?> clazz) {
+    protected RouteMeta buildActivityRout( String path,Class<?> clazz) {
         return RouteMeta.build(RouteType.ACTIVITY, clazz, path, null, null, null, null, -1, -2147483648);
     }
 
