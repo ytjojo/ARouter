@@ -1,5 +1,7 @@
 package com.alibaba.android.arouter.core;
 
+import android.content.Context;
+
 import com.alibaba.android.arouter.base.PriorityList;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
@@ -16,4 +18,8 @@ public class MultiImplmentsRegister implements IMultiImplementRegister {
     }
 
 
+    @Override
+    public void init(Context context) {
+
+    }
 }
