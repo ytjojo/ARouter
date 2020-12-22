@@ -10,18 +10,6 @@ import com.alibaba.android.arouter.facade.model.RouteMeta;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractRouteMetaRegister {
-
-
-    protected RouteMeta buildActivityRout( String path,Class<?> clazz) {
-        return RouteMeta.build(RouteType.ACTIVITY, clazz, path, null, null, null, null, -1, -2147483648);
-    }
-
-    protected RouteMeta buildFragment( String path,Class<?> clazz) {
-        return RouteMeta.build(RouteType.FRAGMENT, clazz, path, null, null, null, null, -1, -2147483648);
-    }
-
-
-
-   public abstract void loadInto(Map<String, RouteMeta> atlas) ;
+public interface IRouteMetaRegister {
+    void loadInto(Map<String, RouteMeta> atlas);
 }

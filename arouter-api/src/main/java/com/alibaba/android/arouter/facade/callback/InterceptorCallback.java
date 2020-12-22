@@ -25,5 +25,10 @@ public interface InterceptorCallback {
      */
     void onInterrupt(Throwable exception);
 
-    void onHangUp(Postcard postcard);
+    /**
+     * onPause process, pipeline will be destroy when this method called.
+     *
+     * @param postcard route meta
+     */
+    void onPause(Postcard postcard);
 }

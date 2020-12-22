@@ -39,5 +39,5 @@ public interface NavigationCallback {
      */
     void onInterrupt(Postcard postcard);
 
-    void onHangUp(Postcard postcard);
+    void onPause(Postcard postcard);
 }

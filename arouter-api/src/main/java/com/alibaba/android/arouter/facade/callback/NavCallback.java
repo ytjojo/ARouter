@@ -29,7 +29,7 @@ public abstract class NavCallback implements NavigationCallback {
     }
 
     @Override
-    public void onHangUp(Postcard postcard) {
+    public void onPause(Postcard postcard) {
 
     }
 }

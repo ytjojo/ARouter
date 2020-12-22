@@ -11,7 +11,7 @@ import com.alibaba.android.arouter.facade.InterceptorResult;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.enums.TypeKind;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
-import com.alibaba.android.arouter.facade.template.AbstractRouteMetaRegister;
+import com.alibaba.android.arouter.facade.template.IRouteMetaRegister;
 import com.alibaba.android.arouter.facade.template.IDeepLinkMatcher;
 import com.alibaba.android.arouter.facade.template.IInterceptorGroup;
 import com.alibaba.android.arouter.facade.template.IMethodInvoker;
@@ -238,6 +238,7 @@ public class LogisticsCenter {
             postcard.setType(routeMeta.getType());
             postcard.setPriority(routeMeta.getPriority());
             postcard.setExtra(routeMeta.getExtra());
+            postcard.setInterceptors(routeMeta.getInterceptors());
 
             Uri rawUri = postcard.getUri();
             if (null != rawUri) {   // Try to set params into bundle.
@@ -512,8 +513,8 @@ public class LogisticsCenter {
                 InterceptorResult result = iPrivateInterceptor.process(postcard.getContext(), postcard);
                 if (result == InterceptorResult.INTERRUPT) {
                     return InterceptorResult.INTERRUPT;
-                } else if (result == InterceptorResult.HANGUP) {
-                    return InterceptorResult.HANGUP;
+                } else if (result == InterceptorResult.PAUSE) {
+                    return InterceptorResult.PAUSE;
                 }
             }
             return InterceptorResult.CONTINUE;
@@ -554,9 +555,9 @@ public class LogisticsCenter {
         }
         Warehouse.groupsIndex.clear();
 
-        List<AbstractRouteMetaRegister> registers = ARouter.getInstance().getMultiImplements(AbstractRouteMetaRegister.class);
+        List<IRouteMetaRegister> registers = ARouter.getInstance().getMultiImplements(IRouteMetaRegister.class);
         if (!CollectionUtils.isEmpty(registers)) {
-            for (AbstractRouteMetaRegister register : registers) {
+            for (IRouteMetaRegister register : registers) {
                 register.loadInto(allRouteMeta);
             }
         }
@@ -607,5 +608,8 @@ public class LogisticsCenter {
         if (templateGroup != null) {
             templateGroup.loadInto(Warehouse.templates);
         }
+    }
+    public static boolean hasInterceptors(){
+        return MapUtils.isNotEmpty(Warehouse.interceptorsIndex);
     }
 }

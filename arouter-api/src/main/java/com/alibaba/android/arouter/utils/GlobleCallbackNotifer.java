@@ -17,10 +17,10 @@ public class GlobleCallbackNotifer {
       routeGlobleCallbackService.onFound(postcard); 
   }
   
-  public static void onHangUp(Postcard postcard) {
+  public static void onPause(Postcard postcard) {
     RouteGlobleCallbackService routeGlobleCallbackService = (RouteGlobleCallbackService)ARouter.getInstance().navigation(RouteGlobleCallbackService.class);
     if (routeGlobleCallbackService != null)
-      routeGlobleCallbackService.onHangUp(postcard); 
+      routeGlobleCallbackService.onPause(postcard);
   }
   
   public static void onInterrupt(Postcard postcard) {

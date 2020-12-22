@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
@@ -58,7 +57,7 @@ final class _ARouter {
     private volatile static _ARouter instance = null;
     private volatile static boolean hasInit = false;
     private volatile static ThreadPoolExecutor executor = DefaultPoolExecutor.getInstance();
-    private HashMap<String, Postcard> mHangUpedPostcards = new HashMap<String, Postcard>();
+    private HashMap<String, Postcard> mPauseedPostcards = new HashMap<String, Postcard>();
     private static Handler mHandler;
     private static Context mContext;
 
@@ -344,7 +343,7 @@ final class _ARouter {
         if (postcard.isForIntent()) {
             postcard.greenChannel();
         }
-        if (!postcard.isGreenChannel()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
+        if (!postcard.isGreenChannel() && LogisticsCenter.hasInterceptors()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
             interceptorService.doInterceptions(postcard, new InterceptorCallback() {
                 /**
                  * Continue process
@@ -377,7 +376,7 @@ final class _ARouter {
                 }
 
                 @Override
-                public void onHangUp(Postcard postcard) {
+                public void onPause(Postcard postcard) {
                     logger.info(Consts.TAG, "Navigation failed, termination by interceptor ");
                 }
             });
@@ -390,7 +389,7 @@ final class _ARouter {
 
     private Object _navigation(final Postcard postcard, final int requestCode, final NavigationCallback callback) {
 
-        if (isHangUped(postcard)) {
+        if (isPauseed(postcard)) {
             return null;
         } else {
             InterceptorResult result = LogisticsCenter.doPrivateInterceptions(postcard);
@@ -546,23 +545,23 @@ final class _ARouter {
         return object;
     }
 
-    protected void hangUp(String tag, Postcard postcard) {
-        if (postcard == this.mHangUpedPostcards.get(tag)) {
+    protected void pause(String tag, Postcard postcard) {
+        if (postcard == this.mPauseedPostcards.get(tag)) {
             return;
         }
-        this.mHangUpedPostcards.put(tag, postcard);
+        this.mPauseedPostcards.put(tag, postcard);
         if (postcard.getNavigationCallback() != null) {
-            postcard.getNavigationCallback().onHangUp(postcard);
+            postcard.getNavigationCallback().onPause(postcard);
         }
-        GlobleCallbackNotifer.onHangUp(postcard);
+        GlobleCallbackNotifer.onPause(postcard);
     }
 
     protected Object invokeMethod(Context paramContext, Postcard postcard, NavigationCallback paramNavigationCallback) {
         return navigation(paramContext, postcard, -1, paramNavigationCallback);
     }
 
-    protected boolean isHangUped(Postcard postcard) {
-        return (!this.mHangUpedPostcards.isEmpty() && this.mHangUpedPostcards.values().contains(postcard));
+    protected boolean isPauseed(Postcard postcard) {
+        return (!this.mPauseedPostcards.isEmpty() && this.mPauseedPostcards.values().contains(postcard));
     }
 
     protected <T> T navigationWithTemplate(Class<? extends T> templateClass) {
@@ -578,8 +577,23 @@ final class _ARouter {
         LogisticsCenter.putRoute(path, routemeta);
     }
 
-    protected boolean removeHangUp(String tag) {
-        Postcard postcard = this.mHangUpedPostcards.remove(tag);
+    protected boolean removePause(String tag) {
+        Postcard postcard = this.mPauseedPostcards.remove(tag);
+        if (postcard != null) {
+            onInterrupt(null, postcard);
+            return true;
+        }
+        return false;
+
+    }
+
+    protected boolean removePause(Postcard postcard) {
+        for(Map.Entry<String,Postcard> entry: mPauseedPostcards.entrySet()){
+            if(entry.getValue() == postcard){
+                mPauseedPostcards.remove(entry.getKey());
+                break;
+            }
+        }
         if (postcard != null) {
             onInterrupt(null, postcard);
             return true;
@@ -602,20 +616,20 @@ final class _ARouter {
         if (exception == null) {
             exception = new HandlerException("No message.");
         }
-        final Postcard postcard = getHangupPostcard(tag);
-        if (removeHangUp(tag)) {
+        final Postcard postcard = getPausedPostcard(tag);
+        if (removePause(tag)) {
             onInterrupt(exception, postcard);
         }
     }
 
-    protected Postcard getHangupPostcard(String tag) {
-        return mHangUpedPostcards.get(tag);
+    protected Postcard getPausedPostcard(String tag) {
+        return mPauseedPostcards.get(tag);
     }
 
-    protected void resumeHangUpPostcard(Context context, String tag) {
-        Postcard postcard = this.mHangUpedPostcards.remove(tag);
+    protected void resumePausePostcard(Context context, String tag) {
+        Postcard postcard = this.mPauseedPostcards.remove(tag);
         if(postcard == null){
-            logger.error(Consts.TAG,"resumeHangUpPostcard with tag " + tag + " not fonnd");
+            logger.error(Consts.TAG,"resumePausePostcard with tag " + tag + " not fonnd");
             return;
         }
         navigation(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());

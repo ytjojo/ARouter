@@ -48,8 +48,8 @@ public class InterceptorServiceImpl implements InterceptorService {
                     try {
                         _execute(0, interceptorCounter, postcard);
                         interceptorCounter.await(postcard.getTimeout(), TimeUnit.SECONDS);
-                        if(ARouter.getInstance().isHangUped(postcard)){
-                            callback.onHangUp(postcard);
+                        if(ARouter.getInstance().isPauseed(postcard)){
+                            callback.onPause(postcard);
                         }else if (interceptorCounter.getCount() > 0) {    // Cancel the navigation this time, if it hasn't return anythings.
                             callback.onInterrupt(new HandlerException("The interceptor processing timed out."));
                         } else if (null != postcard.getTag()) {    // Maybe some exception in the tag.
@@ -100,7 +100,7 @@ public class InterceptorServiceImpl implements InterceptorService {
                 }
 
                 @Override
-                public void onHangUp(Postcard postcard) {
+                public void onPause(Postcard postcard) {
                     counter.cancel();
                 }
             });

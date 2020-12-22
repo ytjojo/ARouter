@@ -202,8 +202,8 @@ public final class ARouter {
         return _ARouter.getInstance().getMultiImplements(keyClass);
     }
 
-    public void hangUp(String tag, Postcard postcard) {
-        _ARouter.getInstance().hangUp(tag, postcard);
+    public void pause(String tag, Postcard postcard) {
+        _ARouter.getInstance().pause(tag, postcard);
     }
 
 
@@ -219,16 +219,20 @@ public final class ARouter {
         _ARouter.getInstance().putRoute(tag, routemeta);
     }
 
-    public void removeHangUp(String tag) {
-        _ARouter.getInstance().removeHangUp(tag);
+    public void removePause(String tag) {
+        _ARouter.getInstance().removePause(tag);
     }
 
-    public void resumeHangUpPostCard(Context context, String tag) {
-        _ARouter.getInstance().resumeHangUpPostcard(context, tag);
+    public void removePause(Postcard postcard) {
+        _ARouter.getInstance().removePause(postcard);
     }
 
-    public boolean isHangUped(Postcard postcard) {
-        return _ARouter.getInstance().isHangUped(postcard);
+    public void resumePausePostCard(Context context, String tag) {
+        _ARouter.getInstance().resumePausePostcard(context, tag);
+    }
+
+    public boolean isPauseed(Postcard postcard) {
+        return _ARouter.getInstance().isPauseed(postcard);
     }
 
 }

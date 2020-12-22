@@ -183,7 +183,9 @@
         int age;
         
         // 通过name来映射URL中的不同参数
-        @Autowired(name = "girl") 
+        //  alternate = {"sex"} 配置可代替参数 传递sex 也会赋值给boy字段
+        // 可以配置多个代替参数
+        @Autowired(name = "girl" ,alternate = {"sex"}) 
         boolean boy;
         
         // 支持解析自定义对象，URL中使用json传递
@@ -631,3 +633,46 @@
     3. QQ 交流群2
         
         ![qq](https://raw.githubusercontent.com/alibaba/ARouter/master/demo/qq-group-2.png)
+        
+#### 九、新增功能
+1. 自动注解支持代替参数，
+
+    ```
+    // 通过name来映射URL中的不同参数
+    //  alternate = {"sex"} 配置可代替参数 传递sex 也会赋值给boy字段
+    // 可以配置多个代替参数
+    @Autowired(name = "girl" ,alternate = {"sex"}) 
+    boolean boy;
+    ```
+2. 路由支持secondarypath
+
+```
+@Route(path = "/test/activity2",secondaryPathes = {"/test/activity2key"})
+public class Test2Activity extends AppCompatActivity {
+```
+
+ ARouter.getInstance().build("/test/activity2key").navigation();
+ 也能打开Test2Activity
+3. 支持正则表达式匹配，并从path获取字段值
+
+```
+@Route(path = "/test/activity4", priority = 100, secondaryPathes = {"/test/home/pro<name>/<extra>/<id>"})
+public class Test4Activity extends AppCompatActivity {
+```
+可以从intent中获取name extra id三个字段。
+4. 支持正则表达式将所有http和https开头的链接交给WebviewActvity,支持正则表达式优先级，值越大优先级越高
+
+```
+@Route(path = "/test/globlewebview", priority = 1, secondaryPathes = {"https://", "http://"})
+public class WebViewActivity extends AppCompatActivity {
+```
+ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322/")).navigation(this);
+此链接会匹配WebviewActivity和Test4Activity，，只会打开Test4Activity，因为Test4Activity优先级高
+
+5. 路由支持配置私有拦截器
+
+```
+@Route(path = "/test/activity1", interceptors = {TestPrivateInterceptor.class,Test1Interceptor.class}, name = "测试用 Activity", secondaryPathes = {"/test/activity1secondary", "/test/activity1secondary2"})
+public class Test1Activity extends BaseActivity {
+
+```

@@ -66,7 +66,7 @@ public final class Postcard extends RouteMeta {
 
     private ArrayList<IPrivateInterceptor> privateInterceptors;
     
-    private Object hangUpCause;
+    private Object pauseCause;
 
 
     private int requestCode = -1;
@@ -692,8 +692,8 @@ public final class Postcard extends RouteMeta {
     }
 
 
-    public void hangUp(String tag) {
-        ARouter.getInstance().hangUp(tag, this);
+    public void pause(String tag) {
+        ARouter.getInstance().pause(tag, this);
     }
 
     public int hashCode() {
@@ -734,12 +734,12 @@ public final class Postcard extends RouteMeta {
     }
 
 
-    public Object getHangUpCause() {
-        return hangUpCause;
+    public Object getPauseCause() {
+        return pauseCause;
     }
 
-    public void setHangUpCause(Object hangUpCause) {
-        this.hangUpCause = hangUpCause;
+    public void setPauseCause(Object pauseCause) {
+        this.pauseCause = pauseCause;
     }
 
     @Override

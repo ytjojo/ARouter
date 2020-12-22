@@ -225,4 +225,14 @@ public class RouteMeta {
     public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, int priority, int extra) {
         return new RouteMeta(type, null, destination, null, path, group, null, null, null, priority, extra);
     }
+
+    public static RouteMeta buildSimpleActivity( String path,Class<?> clazz) {
+        return RouteMeta.build(RouteType.ACTIVITY, clazz, path, null, null, null, null, -1, -2147483648);
+    }
+
+    public static RouteMeta buildSimpleFragment( String path,Class<?> clazz) {
+        return RouteMeta.build(RouteType.FRAGMENT, clazz, path, null, null, null, null, -1, -2147483648);
+    }
+
+
 }

@@ -7,7 +7,7 @@ public interface RouteGlobleCallbackService {
   
   void onFound(Postcard postcard);
   
-  void onHangUp(Postcard postcard);
+  void onPause(Postcard postcard);
   
   void onInterrupt(Postcard postcard);
   
