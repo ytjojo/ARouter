@@ -17,10 +17,8 @@ public class TestPrivateInterceptor implements IPrivateInterceptor {
     }
 
     @Override
-    public InterceptorResult process(final Context context, final Postcard postcard) {
-        if(System.currentTimeMillis()%2 ==0){
-            return InterceptorResult.INTERRUPT;
-        }
+    public void process(final Context context, final Postcard postcard) {
+
         // 这里的弹窗仅做举例，代码写法不具有可参考价值
         final AlertDialog.Builder ab = new AlertDialog.Builder(postcard.getContext());
         ab.setCancelable(false);
@@ -52,7 +50,7 @@ public class TestPrivateInterceptor implements IPrivateInterceptor {
                 ab.create().show();
             }
         });
-        ARouter.getInstance().pause("test1",postcard);
-        return InterceptorResult.PAUSE;
+//        ARouter.getInstance().pause("test1",postcard);
+        postcard.pause("test1");
     }
 }
