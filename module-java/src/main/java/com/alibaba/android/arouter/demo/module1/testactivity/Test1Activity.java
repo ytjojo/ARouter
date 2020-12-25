@@ -8,8 +8,7 @@ import android.util.SparseArray;
 import android.widget.TextView;
 
 import com.alibaba.android.arouter.demo.module1.R;
-import com.alibaba.android.arouter.demo.module1.testinterceptor.Test1Interceptor;
-import com.alibaba.android.arouter.demo.module1.testinterceptor.TestPrivateInterceptor;
+import com.alibaba.android.arouter.demo.module1.testactivity.privateInterceptor.TestPrivateInterceptor;
 import com.alibaba.android.arouter.demo.service.HelloService;
 import com.alibaba.android.arouter.demo.service.model.TestObj;
 import com.alibaba.android.arouter.demo.service.model.TestParcelable;

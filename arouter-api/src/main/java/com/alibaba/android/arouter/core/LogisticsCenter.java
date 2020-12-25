@@ -229,6 +229,9 @@ public class LogisticsCenter {
         if (null == postcard) {
             throw new NoRouteFoundException(TAG + "No postcard!");
         }
+        if (postcard.getType() != null && postcard.getDestination() != null) {
+            return;
+        }
 
         RouteMeta routeMeta = findRouteMeta(postcard);
         if (null == routeMeta) {
@@ -487,34 +490,44 @@ public class LogisticsCenter {
         return arrayList;
     }
 
-    public static ArrayList<IPrivateInterceptor> getPrivateInterceptors(Postcard postcard) {
+    public static void createPrivateInterceptors(Postcard postcard) {
         if (postcard.getInterceptors() != null) {
             ArrayList<IPrivateInterceptor> arrayList = postcard.getPrivateInterceptors();
             if (CollectionUtils.isEmpty(arrayList)) {
                 arrayList = new ArrayList();
                 for (Class<IPrivateInterceptor> clazz : postcard.getInterceptors()) {
-                    if (clazz.isAssignableFrom(IPrivateInterceptor.class))
+                    if (IPrivateInterceptor.class.isAssignableFrom(clazz)){
                         try {
                             arrayList.add((IPrivateInterceptor) clazz.getConstructor().newInstance());
                         } catch (Exception exception) {
                             ARouter.logger.error("ARouter::", "Fetch IPrivateInterceptor instance error, " + TextUtils.formatStackTrace(exception.getStackTrace()));
                         }
+                    }
                 }
                 postcard.setPrivateInterceptors(arrayList);
             }
         }
-        return null;
     }
 
     public static InterceptorResult doPrivateInterceptions(Postcard postcard) {
-        ArrayList<IPrivateInterceptor> privateInterceptors = getPrivateInterceptors(postcard);
+        createPrivateInterceptors(postcard);
+        ArrayList<IPrivateInterceptor> privateInterceptors = postcard.getPrivateInterceptors();
         if (!CollectionUtils.isEmpty(privateInterceptors)) {
-            for (IPrivateInterceptor iPrivateInterceptor : privateInterceptors) {
-                InterceptorResult result = iPrivateInterceptor.process(postcard.getContext(), postcard);
-                if (result == InterceptorResult.INTERRUPT) {
-                    return InterceptorResult.INTERRUPT;
-                } else if (result == InterceptorResult.PAUSE) {
+            int begin = postcard.getPauseCause() == null ? -1 : privateInterceptors.indexOf(postcard.getPauseCause()) + 1;
+
+            for (int i = 0; i < privateInterceptors.size(); i++) {
+                IPrivateInterceptor iPrivateInterceptor = privateInterceptors.get(i);
+                if (i < begin) {
+                    continue;
+                }
+                iPrivateInterceptor.process(postcard.getContext(), postcard);
+                if (ARouter.getInstance().isPaused(postcard)) {
+                    postcard.setPauseCause(iPrivateInterceptor);
                     return InterceptorResult.PAUSE;
+                } else if (postcard.getTag() != null) {
+                    return InterceptorResult.INTERRUPT;
+                } else {
+                    postcard.setPauseCause(null);
                 }
             }
             return InterceptorResult.CONTINUE;
@@ -609,7 +622,8 @@ public class LogisticsCenter {
             templateGroup.loadInto(Warehouse.templates);
         }
     }
-    public static boolean hasInterceptors(){
+
+    public static boolean hasInterceptors() {
         return MapUtils.isNotEmpty(Warehouse.interceptorsIndex);
     }
 }

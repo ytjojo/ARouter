@@ -8,44 +8,67 @@ import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.facade.callback.InterceptorCallback;
 import com.alibaba.android.arouter.facade.service.SyncInterceptorService;
-import com.alibaba.android.arouter.facade.template.ISyncInterceptor;
-import com.alibaba.android.arouter.launcher.ARouter;
-import com.alibaba.android.arouter.utils.CollectionUtils;
-
-import java.util.Iterator;
-import java.util.List;
+import com.alibaba.android.arouter.facade.template.IInterceptor;
 
 @Route(path = "/arouter/service/syncinterceptor")
 public class SyncInterceptorServiceImpl implements SyncInterceptorService {
-    public InterceptorResult doInterceptions(Context context, Postcard postcard) {
-        List<ISyncInterceptor> list = ARouter.getInstance().getMultiImplements(ISyncInterceptor.class);
-        if (!CollectionUtils.isEmpty(list)) {
-            Iterator<ISyncInterceptor> iterator = list.iterator();
-            while (iterator.hasNext()) {
-                InterceptorResult result = iterator.next().process(context, postcard);
-                if (result != InterceptorResult.CONTINUE)
-                    return result;
-            }
-        }
-        return InterceptorResult.CONTINUE;
-    }
 
-    public void init(Context paramContext) {
+
+    public void init(Context context) {
     }
 
     @Override
     public void doInterceptions(Postcard postcard, InterceptorCallback callback) {
-        InterceptorResult result = doInterceptions(postcard.getContext(),postcard);
-        switch (result){
-            case INTERRUPT:
-                callback.onInterrupt(new HandlerException("The interceptor interrupt"));
-                break;
-            case PAUSE:
-                callback.onPause(postcard);
-                break;
-            case CONTINUE:
-                callback.onContinue(postcard);
-                break;
+        int position = postcard.getPauseCause() == null ? -1 : Warehouse.interceptors.indexOf(postcard.getPauseCause());
+        if (position >= 0) {
+            postcard.setPauseCause(null);
+        }
+        _execute(position + 1, callback, postcard);
+    }
+
+
+    /**
+     * Excute interceptor
+     *
+     * @param index    current interceptor index
+     * @param callback InterceptorCallback
+     * @param postcard routeMeta
+     */
+    private static void _execute(final int index, final InterceptorCallback callback, final Postcard postcard) {
+        if (index < Warehouse.interceptors.size()) {
+            final IInterceptor iInterceptor = Warehouse.interceptors.get(index);
+            iInterceptor.process(postcard, new InterceptorCallback() {
+                @Override
+                public void onContinue(Postcard postcard) {
+                    // Last interceptor excute over with no exception.
+                    _execute(index + 1, callback, postcard);  // When counter is down, it will be execute continue ,but index bigger than interceptors size, then U know.
+                }
+
+                @Override
+                public void onInterrupt(Throwable exception) {
+                    // Last interceptor execute over with fatal exception.
+                    Throwable throwable = null == exception ? new HandlerException("No message.") : exception;
+                    postcard.setTag(throwable);    // save the exception message for backup.
+                    callback.onInterrupt(throwable);
+                    // Be attention, maybe the thread in callback has been changed,
+                    // then the catch block(L207) will be invalid.
+                    // The worst is the thread changed to main thread, then the app will be crash, if you throw this exception!
+//                    if (!Looper.getMainLooper().equals(Looper.myLooper())) {    // You shouldn't throw the exception if the thread is main thread.
+//                        throw new HandlerException(exception.getMessage());
+//                    }
+                }
+
+                @Override
+                public void onPause(Postcard postcard) {
+                    callback.onPause(postcard);
+                    postcard.setPauseCause(iInterceptor);
+                }
+            });
+        } else {
+            callback.onContinue(postcard);
+            postcard.greenChannel();
         }
     }
+
+
 }

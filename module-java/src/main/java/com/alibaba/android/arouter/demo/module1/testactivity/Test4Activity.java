@@ -40,7 +40,7 @@ public class Test4Activity extends AppCompatActivity {
         stringBuilder.append("  id = ");
         stringBuilder.append(this.id);
         for(String key : keys){
-            stringBuilder.append("\n øØkey  =" +key );
+            stringBuilder.append("\n key  =" +key );
         }
         if (!TextUtils.isEmpty(extra)) {
             ((TextView) findViewById(R.id.test2)).setText(stringBuilder.toString());

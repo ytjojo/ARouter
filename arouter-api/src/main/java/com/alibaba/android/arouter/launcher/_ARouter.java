@@ -57,7 +57,7 @@ final class _ARouter {
     private volatile static _ARouter instance = null;
     private volatile static boolean hasInit = false;
     private volatile static ThreadPoolExecutor executor = DefaultPoolExecutor.getInstance();
-    private HashMap<String, Postcard> mPauseedPostcards = new HashMap<String, Postcard>();
+    private HashMap<String, Postcard> mPausedPostcards = new HashMap<String, Postcard>();
     private static Handler mHandler;
     private static Context mContext;
 
@@ -389,7 +389,7 @@ final class _ARouter {
 
     private Object _navigation(final Postcard postcard, final int requestCode, final NavigationCallback callback) {
 
-        if (isPauseed(postcard)) {
+        if (isPaused(postcard)) {
             return null;
         } else {
             InterceptorResult result = LogisticsCenter.doPrivateInterceptions(postcard);
@@ -531,7 +531,7 @@ final class _ARouter {
             context = mContext;
         }
         IMethodInvoker iMethodInvoker = LogisticsCenter.getIInvokeMethod((Class<IMethodInvoker>) postcard.getDestination());
-        LogisticsCenter.getPrivateInterceptors(postcard);
+        LogisticsCenter.createPrivateInterceptors(postcard);
         Object object = iMethodInvoker.invoke(context, postcard);
         if (navigationCallback != null) {
             navigationCallback.onArrival(postcard);
@@ -546,10 +546,10 @@ final class _ARouter {
     }
 
     protected void pause(String tag, Postcard postcard) {
-        if (postcard == this.mPauseedPostcards.get(tag)) {
+        if (postcard == this.mPausedPostcards.get(tag)) {
             return;
         }
-        this.mPauseedPostcards.put(tag, postcard);
+        this.mPausedPostcards.put(tag, postcard);
         if (postcard.getNavigationCallback() != null) {
             postcard.getNavigationCallback().onPause(postcard);
         }
@@ -560,8 +560,8 @@ final class _ARouter {
         return navigation(paramContext, postcard, -1, paramNavigationCallback);
     }
 
-    protected boolean isPauseed(Postcard postcard) {
-        return (!this.mPauseedPostcards.isEmpty() && this.mPauseedPostcards.values().contains(postcard));
+    protected boolean isPaused(Postcard postcard) {
+        return (!this.mPausedPostcards.isEmpty() && this.mPausedPostcards.values().contains(postcard));
     }
 
     protected <T> T navigationWithTemplate(Class<? extends T> templateClass) {
@@ -578,7 +578,7 @@ final class _ARouter {
     }
 
     protected boolean removePause(String tag) {
-        Postcard postcard = this.mPauseedPostcards.remove(tag);
+        Postcard postcard = this.mPausedPostcards.remove(tag);
         if (postcard != null) {
             onInterrupt(null, postcard);
             return true;
@@ -588,9 +588,9 @@ final class _ARouter {
     }
 
     protected boolean removePause(Postcard postcard) {
-        for(Map.Entry<String,Postcard> entry: mPauseedPostcards.entrySet()){
+        for(Map.Entry<String,Postcard> entry: mPausedPostcards.entrySet()){
             if(entry.getValue() == postcard){
-                mPauseedPostcards.remove(entry.getKey());
+                mPausedPostcards.remove(entry.getKey());
                 break;
             }
         }
@@ -623,11 +623,11 @@ final class _ARouter {
     }
 
     protected Postcard getPausedPostcard(String tag) {
-        return mPauseedPostcards.get(tag);
+        return mPausedPostcards.get(tag);
     }
 
     protected void resumePausePostcard(Context context, String tag) {
-        Postcard postcard = this.mPauseedPostcards.remove(tag);
+        Postcard postcard = this.mPausedPostcards.remove(tag);
         if(postcard == null){
             logger.error(Consts.TAG,"resumePausePostcard with tag " + tag + " not fonnd");
             return;

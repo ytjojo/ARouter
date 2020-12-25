@@ -1,4 +1,4 @@
-package com.alibaba.android.arouter.demo.module1.testinterceptor;
+package com.alibaba.android.arouter.demo.module1.testactivity.privateInterceptor;
 
 import android.app.AlertDialog;
 import android.content.Context;

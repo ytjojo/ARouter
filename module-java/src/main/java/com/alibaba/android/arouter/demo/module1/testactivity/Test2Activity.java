@@ -6,10 +6,11 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.alibaba.android.arouter.demo.module1.R;
+import com.alibaba.android.arouter.demo.module1.testactivity.privateInterceptor.TestPrivateInterceptor;
 import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
 
-@Route(path = "/test/activity2",secondaryPathes = {"/test/activity2key"})
+@Route(path = "/test/activity2",secondaryPathes = {"/test/activity2key"},interceptors = {TestPrivateInterceptor.class})
 public class Test2Activity extends AppCompatActivity {
 
     @Autowired

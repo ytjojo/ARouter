@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .withObject("obj", testObj)
                         .withObject("objList", objList)
                         .withObject("map", map)
-                        .navigation();
+                        .navigation(this);
                 break;
             case R.id.navByName:
                 ((HelloService) ARouter.getInstance().build("/yourservicegroupname/hello").navigation()).sayHello("mike");

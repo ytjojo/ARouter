@@ -11,6 +11,7 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.util.SparseArray;
 
+import com.alibaba.android.arouter.exception.HandlerException;
 import com.alibaba.android.arouter.facade.callback.NavigationCallback;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
 import com.alibaba.android.arouter.facade.service.SerializationService;
@@ -65,14 +66,13 @@ public final class Postcard extends RouteMeta {
 
 
     private ArrayList<IPrivateInterceptor> privateInterceptors;
-    
+
     private Object pauseCause;
 
 
     private int requestCode = -1;
 
     private boolean isForIntent;
-
 
 
     public Bundle getOptionsBundle() {
@@ -101,18 +101,18 @@ public final class Postcard extends RouteMeta {
     }
 
     public Postcard(String path, String group, Class<?> keyClass) {
-        this(path, group, (Uri)null, (Bundle)null, keyClass);
+        this(path, group, (Uri) null, (Bundle) null, keyClass);
     }
 
     public Postcard(String path, String group) {
-        this(path, group, null, null,null);
+        this(path, group, null, null, null);
     }
 
     public Postcard(String path, String group, Uri uri, Bundle bundle) {
-        this(path, group,uri,bundle,null);
+        this(path, group, uri, bundle, null);
     }
 
-    public Postcard(String path, String group, Uri uri, Bundle bundle,Class keyClass) {
+    public Postcard(String path, String group, Uri uri, Bundle bundle, Class keyClass) {
         setPath(path);
         setGroup(group);
         setUri(uri);
@@ -620,7 +620,7 @@ public final class Postcard extends RouteMeta {
     public Intent buildIntent(Context context) {
         Intent intent = new Intent(context, getDestination());
         intent.putExtras(getExtras());
-        if (getIntentData() != null){
+        if (getIntentData() != null) {
             intent.setData(getIntentData());
         }
         int flags = getFlags();
@@ -630,7 +630,7 @@ public final class Postcard extends RouteMeta {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         }
         String action = getAction();
-        if (!TextUtils.isEmpty(action)){
+        if (!TextUtils.isEmpty(action)) {
             intent.setAction(action);
         }
         setIntent(intent);
@@ -639,10 +639,10 @@ public final class Postcard extends RouteMeta {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other){
+        if (this == other) {
             return true;
-        }else {
-            if(other instanceof Postcard){
+        } else {
+            if (other instanceof Postcard) {
                 Postcard postcard = (Postcard) other;
                 return getPath().equals(postcard.getPath()) && getGroup().equals(postcard.getGroup());
             }
@@ -665,7 +665,7 @@ public final class Postcard extends RouteMeta {
         return (uri == null) ? this.uri : uri;
     }
 
-    public Postcard withIntentData(Uri uri){
+    public Postcard withIntentData(Uri uri) {
         this.intentData = uri;
         return this;
     }
@@ -678,7 +678,7 @@ public final class Postcard extends RouteMeta {
         return this.navigationCallback;
     }
 
-    public Object getObject( String key) {
+    public Object getObject(String key) {
         HashMap<String, Object> hashMap = this.objectHashMap;
         return (hashMap != null) ? hashMap.get(key) : null;
     }
@@ -768,14 +768,18 @@ public final class Postcard extends RouteMeta {
         return this;
     }
 
-    public Postcard setForIntent(){
+    public Postcard setForIntent() {
         isForIntent = true;
         return this;
     }
-    public boolean isForIntent(){
+
+    public boolean isForIntent() {
         return isForIntent;
     }
 
+    public void interrupt(Throwable throwable) {
+        setTag(throwable == null ? new HandlerException("No message.") : throwable);
+    }
 
 
 }

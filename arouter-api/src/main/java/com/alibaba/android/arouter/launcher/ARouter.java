@@ -231,8 +231,8 @@ public final class ARouter {
         _ARouter.getInstance().resumePausePostcard(context, tag);
     }
 
-    public boolean isPauseed(Postcard postcard) {
-        return _ARouter.getInstance().isPauseed(postcard);
+    public boolean isPaused(Postcard postcard) {
+        return _ARouter.getInstance().isPaused(postcard);
     }
 
 }

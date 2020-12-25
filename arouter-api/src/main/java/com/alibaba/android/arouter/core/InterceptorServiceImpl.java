@@ -48,7 +48,7 @@ public class InterceptorServiceImpl implements InterceptorService {
                     try {
                         _execute(0, interceptorCounter, postcard);
                         interceptorCounter.await(postcard.getTimeout(), TimeUnit.SECONDS);
-                        if(ARouter.getInstance().isPauseed(postcard)){
+                        if(ARouter.getInstance().isPaused(postcard)){
                             callback.onPause(postcard);
                         }else if (interceptorCounter.getCount() > 0) {    // Cancel the navigation this time, if it hasn't return anythings.
                             callback.onInterrupt(new HandlerException("The interceptor processing timed out."));

@@ -183,16 +183,16 @@ public class RouteMeta {
         return this.secondaryPathes;
     }
 
-    public void setInterceptors(Class[] paramArrayOfClass) {
-        this.interceptors = paramArrayOfClass;
+    public void setInterceptors(Class[] interceptorClasses) {
+        this.interceptors = interceptorClasses;
     }
 
-    public void setKeyForImplement(Class paramClass) {
-        this.keyForImplement = paramClass;
+    public void setKeyForImplement(Class keyForImplement) {
+        this.keyForImplement = keyForImplement;
     }
 
-    public void setSecondaryPathes(String[] paramArrayOfString) {
-        this.secondaryPathes = paramArrayOfString;
+    public void setSecondaryPathes(String[] secondaryPathes) {
+        this.secondaryPathes = secondaryPathes;
     }
 
     @Override
