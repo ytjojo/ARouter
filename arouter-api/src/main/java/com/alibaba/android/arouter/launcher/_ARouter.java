@@ -626,7 +626,7 @@ final class _ARouter {
         return mPausedPostcards.get(tag);
     }
 
-    protected void resumePausePostcard(Context context, String tag) {
+    protected void resumePausedPostcard(Context context, String tag) {
         Postcard postcard = this.mPausedPostcards.remove(tag);
         if(postcard == null){
             logger.error(Consts.TAG,"resumePausePostcard with tag " + tag + " not fonnd");

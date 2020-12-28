@@ -695,6 +695,9 @@ public final class Postcard extends RouteMeta {
     public void pause(String tag) {
         ARouter.getInstance().pause(tag, this);
     }
+    public void resumePausePostCard(Context context,String tag){
+        ARouter.getInstance().resumePausedPostcard(context,tag);
+    }
 
     public int hashCode() {
         return ArrayUtils.hashCode(new Object[]{getPath(), getGroup()});

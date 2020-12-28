@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 
 import com.alibaba.android.arouter.demo.module1.MainLooper;
-import com.alibaba.android.arouter.facade.InterceptorResult;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
 import com.alibaba.android.arouter.launcher.ARouter;
@@ -27,7 +26,7 @@ public class TestPrivateInterceptor implements IPrivateInterceptor {
         ab.setNegativeButton("继续", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ARouter.getInstance().resumePausePostCard(context,"test1");
+                ARouter.getInstance().resumePausedPostcard(context,"test1");
             }
         });
         ab.setNeutralButton("算了", new DialogInterface.OnClickListener() {
@@ -40,7 +39,7 @@ public class TestPrivateInterceptor implements IPrivateInterceptor {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 postcard.withString("extra", "我是在拦截器中附加的参数");
-                ARouter.getInstance().resumePausePostCard(context,"test1");
+                ARouter.getInstance().resumePausedPostcard(context,"test1");
             }
         });
 
@@ -52,5 +51,6 @@ public class TestPrivateInterceptor implements IPrivateInterceptor {
         });
 //        ARouter.getInstance().pause("test1",postcard);
         postcard.pause("test1");
+
     }
 }

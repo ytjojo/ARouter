@@ -672,7 +672,12 @@ ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/myd
 5. 路由支持配置私有拦截器
 
 ```
-@Route(path = "/test/activity1", interceptors = {TestPrivateInterceptor.class,Test1Interceptor.class}, name = "测试用 Activity", secondaryPathes = {"/test/activity1secondary", "/test/activity1secondary2"})
+@Route(path = "/test/activity1", interceptors = {TestPrivateInterceptor.class}, name = "测试用 Activity", secondaryPathes = {"/test/activity1secondary", "/test/activity1secondary2"})
 public class Test1Activity extends BaseActivity {
 
 ```
+
+postcard.pause("test1");
+postcard.interrupt(throwable);
+postcard.interrupt(throwable);
+ARouter.getInstance().removePause("test1");
