@@ -635,6 +635,11 @@
         ![qq](https://raw.githubusercontent.com/alibaba/ARouter/master/demo/qq-group-2.png)
         
 #### 九、新增功能
+
+新增功能原则：
+注解能解决问题的就不要用拦截器处理
+能在局部处理就不要扩散到全局
+
 1. 新增alternate字段，自动装载注解支持多个代替参数，
     参考Gson的@SerializedName注解alternate字段
 

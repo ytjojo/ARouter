@@ -17,7 +17,7 @@ import com.alibaba.android.arouter.launcher.ARouter;
 
 import static android.webkit.WebSettings.LOAD_DEFAULT;
 
-@Route(path = "/test/globlewebview", priority = 1, secondaryPathes = {"https://", "http://"})
+@Route(path = "/test/globlewebview", priority = -1, secondaryPathes = {"https://", "http://"})
 public class WebViewActivity extends AppCompatActivity {
     @Autowired
     public int abc;

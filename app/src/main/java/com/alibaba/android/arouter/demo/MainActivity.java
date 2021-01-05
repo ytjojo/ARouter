@@ -298,6 +298,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.startTest4:
                 ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322/")).navigation(this);
                 break;
+
+            case R.id.testSection:
+                ARouter.getInstance().build(Uri.parse("http://test.com/test/activity2key?key1=section")).navigation(this);
+                break;
             case R.id.templateTest2:
                 Intent intent = ARouter.getInstance().navigationWithTemplate(ITestNavigator.class).navigateTest2(this,"hello world");
                 startActivity(intent);
