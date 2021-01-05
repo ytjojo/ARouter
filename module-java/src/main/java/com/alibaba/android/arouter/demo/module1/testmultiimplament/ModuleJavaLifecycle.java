@@ -7,4 +7,9 @@ public class ModuleJavaLifecycle implements IModuleLifecycle {
   public int getPrioriry() {
     return 20;
   }
+
+  @Override
+  public void onCreate() {
+
+  }
 }

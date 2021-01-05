@@ -653,14 +653,16 @@ public class Test2Activity extends AppCompatActivity {
 
  ARouter.getInstance().build("/test/activity2key").navigation();
  也能打开Test2Activity
-3. 支持正则表达式匹配，并从path获取字段值，从path中获取字段需要用<>来包括字段key，还支持带scheme完整路径匹配
+3. secondarypath支持正则表达式匹配，并从path获取字段值，从path中获取字段，需要用<>来包括字段key，还支持带scheme完整路径匹配
+部分路径模糊匹配
+支持路由优先级，值越大优先级越高
 
 ```
 @Route(path = "/test/activity4", priority = 100, secondaryPathes = {"/test/home/pro<name>/<extra>/<id>"})
 public class Test4Activity extends AppCompatActivity {
 ```
 可以从intent中获取name extra id三个字段。
-4. 支持正则表达式将所有http和https开头的链接交给WebviewActvity,支持正则表达式优先级，值越大优先级越高
+4. secondarypath支持正则表达式将所有http和https开头的链接交给WebviewActvity,支持正则表达式优先级，值越大优先级越高
 
 ```
 @Route(path = "/test/globlewebview", priority = 1, secondaryPathes = {"https://", "http://"})
@@ -812,6 +814,47 @@ public class ARouter$$ITestNavigatorImpl implements ITestNavigator {
     postcard.navigation(activity, null);
   }
 }
+```
+
+调用方式
+
+
+```
+ Intent intent = ARouter.getInstance().navigationWithTemplate(ITestNavigator.class).navigateTest2(this,"hello world");
+                startActivity(intent);
+
+```
+
+8. 支持根据接口获取所有实现类
+
+用途，模块化后，各个模块生命周期，各个模块处理路由降级处理
+
+支持优先级 值越大优先级越高
+
+```
+
+@MultiImplement(priority = 1, value = IModuleLifecycle.class)
+public class AppModuleLifecycle implements IModuleLifecycle {
+  public int getPrioriry() {
+    return 1;
+  }
+
+  @Override
+  public void onCreate() {
+    
+  }
+}
+```
+
+如何调用
+
+```
+
+ List<IModuleLifecycle> list = ARouter.getInstance().getMultiImplements(IModuleLifecycle.class);
+ for (IModuleLifecycle iModuleLifecycle : list) {
+      iModuleLifecycle.onCreate();
+ }
+
 ```
 
 

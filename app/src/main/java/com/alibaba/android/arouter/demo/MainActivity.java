@@ -274,6 +274,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     stringBuilder.append("  ");
                     stringBuilder1.append(stringBuilder.toString());
                 }
+
                 Toast.makeText(getApplicationContext(), stringBuilder1.toString(), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.staticMethodrouter:
@@ -298,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322/")).navigation(this);
                 break;
             case R.id.templateTest2:
-                Intent intent = ARouter.getInstance().navigationWithtemplate(ITestNavigator.class).navigateTest2(this,"hello world");
+                Intent intent = ARouter.getInstance().navigationWithTemplate(ITestNavigator.class).navigateTest2(this,"hello world");
                 startActivity(intent);
                 break;
             default:

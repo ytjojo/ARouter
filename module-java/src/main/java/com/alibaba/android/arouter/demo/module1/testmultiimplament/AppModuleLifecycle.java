@@ -7,4 +7,9 @@ public class AppModuleLifecycle implements IModuleLifecycle {
   public int getPrioriry() {
     return 1;
   }
+
+  @Override
+  public void onCreate() {
+
+  }
 }

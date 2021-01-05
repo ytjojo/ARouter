@@ -211,7 +211,7 @@ public final class ARouter {
         return _ARouter.getInstance().invokeMethod(context, postcard, navigationCallback);
     }
 
-    public <T> T navigationWithtemplate(Class<? extends T> templateClass) {
+    public <T> T navigationWithTemplate(Class<? extends T> templateClass) {
         return _ARouter.getInstance().navigationWithTemplate(templateClass);
     }
 

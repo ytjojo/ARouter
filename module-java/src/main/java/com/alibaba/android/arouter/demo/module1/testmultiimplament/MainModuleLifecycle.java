@@ -7,4 +7,9 @@ public class MainModuleLifecycle implements IModuleLifecycle {
   public int getPrioriry() {
     return 4;
   }
+
+  @Override
+  public void onCreate() {
+
+  }
 }

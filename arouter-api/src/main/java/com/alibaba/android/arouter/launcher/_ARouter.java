@@ -343,6 +343,14 @@ final class _ARouter {
         if (postcard.isForIntent()) {
             postcard.greenChannel();
         }
+        return intercept(context, postcard, requestCode, callback);
+    }
+
+    private Object intercept(final Context context, final Postcard postcard, final int requestCode, final NavigationCallback callback) {
+        if(context != null && context != postcard.getContext()){
+            postcard.setContext(context);
+        }
+
         if (!postcard.isGreenChannel() && LogisticsCenter.hasInterceptors()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
             interceptorService.doInterceptions(postcard, new InterceptorCallback() {
                 /**
@@ -383,7 +391,6 @@ final class _ARouter {
         } else {
             return _navigation(postcard, requestCode, callback);
         }
-
         return null;
     }
 
@@ -588,8 +595,8 @@ final class _ARouter {
     }
 
     protected boolean removePause(Postcard postcard) {
-        for(Map.Entry<String,Postcard> entry: mPausedPostcards.entrySet()){
-            if(entry.getValue() == postcard){
+        for (Map.Entry<String, Postcard> entry : mPausedPostcards.entrySet()) {
+            if (entry.getValue() == postcard) {
                 mPausedPostcards.remove(entry.getKey());
                 break;
             }
@@ -628,11 +635,15 @@ final class _ARouter {
 
     protected void resumePausedPostcard(Context context, String tag) {
         Postcard postcard = this.mPausedPostcards.remove(tag);
-        if(postcard == null){
-            logger.error(Consts.TAG,"resumePausePostcard with tag " + tag + " not fonnd");
+        if (postcard == null) {
+            logger.error(Consts.TAG, "resumePausePostcard with tag " + tag + " not fonnd");
             return;
         }
-        navigation(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
+        if(postcard.getType() == null || postcard.getDestination() == null){
+            navigation(context,postcard,postcard.getRequestCode(),postcard.getNavigationCallback());
+        }else {
+            intercept(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
+        }
     }
 
 }

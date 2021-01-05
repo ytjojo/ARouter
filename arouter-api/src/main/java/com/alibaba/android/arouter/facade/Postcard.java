@@ -703,13 +703,14 @@ public final class Postcard extends RouteMeta {
         return ArrayUtils.hashCode(new Object[]{getPath(), getGroup()});
     }
 
-    public void invokeMethod() {
-        invokeMethod(null);
+    public Object invokeMethod() {
+        return invokeMethod(null);
     }
 
     public Object invokeMethod(Context postcard) {
         return invokeMethod(postcard, null);
     }
+
 
     public Object invokeMethod(Context context, NavigationCallback callback) {
         return ARouter.getInstance().invokeMethod(context, this, callback);
