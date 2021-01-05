@@ -650,7 +650,13 @@
     @Autowired(name = "girl" ,alternate = {"sex"}) 
     boolean boy;
     ```
-2. 路由支持secondarypath，可以配置多个
+2. 路由支持secondarypath，可以配置多个，支持优先级配置，值越大优先级越高
+
+secondarypath可以配置
+仅有scheme 实际场景仅适用打开web链接 必须是Uri方式路由
+仅有path 常见 Uri和path路由都可以唤起
+host+path 常见 必须是Uri方式路由
+scheme+host+path 比较严苛 必须是Uri方式路由
 
 ```
 @Route(path = "/test/activity2",secondaryPathes = {"/test/activity2key"})
@@ -661,7 +667,7 @@ public class Test2Activity extends AppCompatActivity {
  也能打开Test2Activity
 3. secondarypath支持正则表达式匹配，并从path获取字段值，从path中获取字段，需要用<>来包括字段key，还支持带scheme完整路径匹配
 部分路径模糊匹配
-支持路由优先级，值越大优先级越高
+
 
 ```
 @Route(path = "/test/activity4", priority = 100, secondaryPathes = {"/test/home/pro<name>/<extra>/<id>"})
