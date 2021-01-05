@@ -672,13 +672,22 @@ ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/myd
 此链接会匹配WebviewActivity和Test4Activity，，只会打开Test4Activity，因为Test4Activity优先级高
 
 5. 路由支持配置多个私有拦截器，多个按顺序执行
+拦截器中可以暂停路由，在异步获取结果后再决定是否跳转
+在私有拦截器可以替换参数，
+判断条件等处理
 
 ```
 @Route(path = "/test/activity1", interceptors = {TestPrivateInterceptor.class}, name = "测试用 Activity", secondaryPathes = {"/test/activity1secondary", "/test/activity1secondary2"})
 public class Test1Activity extends BaseActivity {
 
 ```
-
+6. 暂停 恢复 移除暂停 路由
+常用于异步场景，比如需要登陆
+需要手势密码验证
+跳转动态从服务器获取状态来确定是否进行跳转
+暂停路由可以在Arouter.build()后直接调用
+可以在公共拦截器中处理
+也可以私有拦截器中处理
 在拦截器中需要异步处理的话，需要同步调用暂停或终止，根据异步结果再确定调用暂停后恢复，或暂停后移除
 //暂停
 postcard.pause("test1");
@@ -687,6 +696,7 @@ postcard.interrupt(throwable);
 //暂停后恢复
 postcard.resumePausePostCard(throwable);
 //暂停后移除
+//例如如果从服务器获取结果是不允许跳转，就直接移除暂停的路由。整个路由生命周期结束
 ARouter.getInstance().removePause("test1");
 6. 路由支持静态公共方法,和公共构造方法，可以有返回值
 参数除Postcard可以提供的之外，还支持Postcard ，Context ，NavigationCallback，Uri，通过注解标记的IntentFlag，Action,RequestCode;
