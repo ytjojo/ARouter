@@ -52,9 +52,9 @@ public class MethodInvokerGenerator {
         if (invokeMethodSpec == null) {
             invokeMethodSpec = MethodInvokerGenerator.getInvokeMethodSpec(processor.className(Consts.CONTEXT), processor.className(Consts.POSTCARD));
             invokeMethodSpec.addStatement("final String path = postcard.getPath()");
-            invokeMethodSpec.beginControlFlow("if(path.equals($S))", routeMeta.getPath());
+            invokeMethodSpec.beginControlFlow("if($S.equals(path))", routeMeta.getPath());
         } else {
-            invokeMethodSpec.nextControlFlow("else if(path.equals($S))", routeMeta.getPath());
+            invokeMethodSpec.nextControlFlow("else if($S.equals(path))", routeMeta.getPath());
         }
         ExecutableElement executableElement = (ExecutableElement) routeMeta.getRawType();
         List<? extends VariableElement> parameters = executableElement.getParameters();
@@ -122,9 +122,16 @@ public class MethodInvokerGenerator {
                         sb.append("postcard");
 
                     } else if (isContext) {
-                        sb.append("context");
+                        if(processor.isSubType(var.asType(), Consts.ACTIVITY)){
+                            sb.append("($T)context");
+                            args.add(processor.className(Consts.ACTIVITY));
+                        }else {
+                            sb.append("context");
+                        }
+
                     } else if (isAction) {
-                        sb.append("postcard.getAciion()");
+                        sb.append("postcard.getAction() == null ? $S : postcard.getAction()");
+                        args.add(var.getAnnotation(Action.class).value());
                     } else if (isFlags) {
                         sb.append("postcard.getFlags()");
                     } else if (isRequestCode) {
