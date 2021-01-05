@@ -635,7 +635,8 @@
         ![qq](https://raw.githubusercontent.com/alibaba/ARouter/master/demo/qq-group-2.png)
         
 #### 九、新增功能
-1. 自动注解支持多个代替参数，
+1. 新增alternate字段，自动装载注解支持多个代替参数，
+    参考Gson的@SerializedName注解alternate字段
 
     ```
     // 通过name来映射URL中的不同参数
