@@ -652,11 +652,11 @@
     ```
 2. 路由支持secondarypath，可以配置多个，支持优先级配置，值越大优先级越高
 
-secondarypath可以配置
-仅有scheme 实际场景仅适用打开web链接 必须是Uri方式路由
-仅有path 常见 Uri和path路由都可以唤起
-host+path 常见 必须是Uri方式路由
-scheme+host+path 比较严苛 必须是Uri方式路由
+secondarypath可以配置一下四种
++ 仅有scheme 实际场景仅适用打开web链接 必须是Uri方式路由
++ 仅有path 常见 Uri和path路由都可以唤起
++ host+path 常见 必须是Uri方式路由
++ scheme+host+path 比较严苛 必须是Uri方式路由
 
 ```
 @Route(path = "/test/activity2",secondaryPathes = {"/test/activity2key"})
