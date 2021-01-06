@@ -652,7 +652,10 @@
     ```
 2. 路由支持secondarypath，可以配置多个，支持优先级配置，值越大优先级越高
 
-secondarypath可以配置一下四种
+随着业务迭代，因各种原因当初制定path已不符合当前规则，需要修改路由path，但是要兼容旧的深度链接方式唤起，
+secondarypath就派上用场了，不需要在公共代码进行路由转换。
+
+secondarypath可以配置以下四种
 + 仅有scheme 实际场景仅适用打开web链接 必须是Uri方式创建路由
 + 仅有path 比较常见 Uri和path创建路由都可以唤起
 + host+path 必须是Uri方式创建路由
@@ -663,10 +666,10 @@ secondarypath可以配置一下四种
 public class Test2Activity extends AppCompatActivity {
 ```
 
- ARouter.getInstance().build("/test/activity2key").navigation();
+ `ARouter.getInstance().build("/test/activity2key").navigation();`
  也能打开Test2Activity
-3. secondarypath支持正则表达式匹配，并从path获取字段值，从path中获取字段，需要用<>来包括字段key，还支持带scheme完整路径匹配
-部分路径模糊匹配
+ 
+3. secondarypath支持正则表达式匹配，并从path获取字段值，从path中获取字段，需要用<>来包括字段key
 
 
 ```
@@ -674,13 +677,15 @@ public class Test2Activity extends AppCompatActivity {
 public class Test4Activity extends AppCompatActivity {
 ```
 可以从intent中获取name extra id三个字段。
+
 4. secondarypath支持正则表达式将所有http和https开头的链接交给WebviewActvity,支持正则表达式优先级，值越大优先级越高
 
 ```
 @Route(path = "/test/globlewebview", priority = 1, secondaryPathes = {"https://", "http://"})
 public class WebViewActivity extends AppCompatActivity {
 ```
-ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322/")).navigation(this);
+
+`ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322/")).navigation(this);`
 此链接会匹配WebviewActivity和Test4Activity，，只会打开Test4Activity，因为Test4Activity优先级高
 
 5. 路由支持配置多个私有拦截器，多个按顺序执行
@@ -694,6 +699,7 @@ public class Test1Activity extends BaseActivity {
 
 ```
 6. 暂停 恢复 移除暂停 路由
+
 常用于异步场景，比如需要登陆
 需要手势密码验证
 跳转动态从服务器获取状态来确定是否进行跳转
@@ -710,7 +716,9 @@ postcard.resumePausePostCard(throwable);
 //暂停后移除
 //例如如果从服务器获取结果是不允许跳转，就直接移除暂停的路由。整个路由生命周期结束
 ARouter.getInstance().removePause("test1");
+
 6. 路由支持静态公共方法,和公共构造方法，可以有返回值
+
 参数除Postcard可以提供的之外，还支持Postcard ，Context ，NavigationCallback，Uri，通过注解标记的IntentFlag，Action,RequestCode;
 
 静态方法但是有返回值的时候一定要greenChannel()，不然拦截处理走异步，会提前返回null
@@ -728,7 +736,7 @@ ARouter.getInstance().removePause("test1");
         context.startActivityForResult(intent, requestCode);
     }
 ```
-7 支持接口方式启动路由，这样参数就很明确，可以下沉到基础库
+7. 支持接口方式启动路由，这样参数就很明确，可以下沉到基础库
 
 ```
 public interface ITestNavigator {
@@ -878,7 +886,7 @@ public class AppModuleLifecycle implements IModuleLifecycle {
  }
 
 ```
-9 关于Intent 字段兼容
+9. 关于Intent 字段兼容
 如果是Uri构建路由方式（一般是深度链接打开app），转交给ARouter，目标页字段有@Autowired注解，ARouter会自动转换类型
 例如
 
@@ -894,10 +902,14 @@ public class AppModuleLifecycle implements IModuleLifecycle {
     boolean girl;
 
 ```
-ARouter.getInstance().build(Uri.parse("arouter://m.aliyun.com/test/activity3?name=alex&age=18&boy=true&high=180")).navigation(this);
+启动代码
+`ARouter.getInstance().build(Uri.parse("arouter://m.aliyun.com/test/activity3?name=alex&age=18&boy=true&high=180")).navigation(this);`
+
 name age girl字段都能正确获取数据值，
+
 如果链接中拼接参数boy=1标示true boy=0标示false，
-需要自定义IPrivateInterceptor，在拦截器中转换处理，同时@Router配置interceptors字段
+
+需要自定义IPrivateInterceptor，在拦截器中转换处理，同时将拦截器class 加入到@Router的interceptors字段中
 
 
 
