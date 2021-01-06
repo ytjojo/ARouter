@@ -33,7 +33,7 @@ public class TestPrivateInterceptor implements IPrivateInterceptor {
         ab.setNeutralButton("算了", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ARouter.getInstance().removePause("test1");
+                ARouter.getInstance().removePaused("test1");
             }
         });
         ab.setPositiveButton("加点料", new DialogInterface.OnClickListener() {

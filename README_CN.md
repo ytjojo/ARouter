@@ -698,15 +698,21 @@ public class WebViewActivity extends AppCompatActivity {
 public class Test1Activity extends BaseActivity {
 
 ```
-6. 暂停 恢复 移除暂停 路由
+6. 路由的暂停、恢复、移除暂停
 
-常用于异步场景，比如需要登陆
-需要手势密码验证
-跳转动态从服务器获取状态来确定是否进行跳转
-暂停路由可以在Arouter.build()后直接调用
-可以在公共拦截器中处理
-也可以私有拦截器中处理
-在拦截器中需要异步处理的话，需要同步调用暂停或终止，根据异步结果再确定调用暂停后恢复，或暂停后移除
+常用于异步场景：
+
++ 登陆成功后跳转
++ 需要手势密码验证
++ 动态从服务器获取状态来确定是否进行跳转
+
+暂停路由可以在ARouter.build()后直接调用
+在公共拦截器中调用
+可以私有拦截器中调用
+
+
+在私有拦截器中需要异步处理的话，需要同步调用暂停，根据异步结果再确定调用暂停后恢复，或暂停后移除
+
 //暂停
 postcard.pause("test1");
 //终止
@@ -715,7 +721,7 @@ postcard.interrupt(throwable);
 postcard.resumePausePostCard(throwable);
 //暂停后移除
 //例如如果从服务器获取结果是不允许跳转，就直接移除暂停的路由。整个路由生命周期结束
-ARouter.getInstance().removePause("test1");
+ARouter.getInstance().removePaused("test1");
 
 6. 路由支持静态公共方法,和公共构造方法，可以有返回值
 

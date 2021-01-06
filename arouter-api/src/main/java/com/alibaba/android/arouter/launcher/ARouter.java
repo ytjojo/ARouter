@@ -219,12 +219,12 @@ public final class ARouter {
         _ARouter.getInstance().putRoute(tag, routemeta);
     }
 
-    public void removePause(String tag) {
-        _ARouter.getInstance().removePause(tag);
+    public void removePaused(String tag) {
+        _ARouter.getInstance().removePaused(tag);
     }
 
-    public void removePause(Postcard postcard) {
-        _ARouter.getInstance().removePause(postcard);
+    public void removePaused(Postcard postcard) {
+        _ARouter.getInstance().removePaused(postcard);
     }
 
     public void resumePausedPostcard(Context context, String tag) {

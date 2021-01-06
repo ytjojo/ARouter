@@ -584,7 +584,7 @@ final class _ARouter {
         LogisticsCenter.putRoute(path, routemeta);
     }
 
-    protected boolean removePause(String tag) {
+    protected boolean removePaused(String tag) {
         Postcard postcard = this.mPausedPostcards.remove(tag);
         if (postcard != null) {
             onInterrupt(null, postcard);
@@ -594,7 +594,7 @@ final class _ARouter {
 
     }
 
-    protected boolean removePause(Postcard postcard) {
+    protected boolean removePaused(Postcard postcard) {
         for (Map.Entry<String, Postcard> entry : mPausedPostcards.entrySet()) {
             if (entry.getValue() == postcard) {
                 mPausedPostcards.remove(entry.getKey());
@@ -624,7 +624,7 @@ final class _ARouter {
             exception = new HandlerException("No message.");
         }
         final Postcard postcard = getPausedPostcard(tag);
-        if (removePause(tag)) {
+        if (removePaused(tag)) {
             onInterrupt(exception, postcard);
         }
     }
