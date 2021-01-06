@@ -727,7 +727,7 @@ ARouter.getInstance().removePaused("test1");
 
 参数除Postcard可以提供的之外，还支持Postcard ，Context ，NavigationCallback，Uri，通过注解标记的IntentFlag，Action,RequestCode;
 
-静态方法但是有返回值的时候一定要greenChannel()，不然拦截处理走异步，会提前返回null
+如果静态方法有返回值的时候一定要greenChannel()，不然拦截处理走异步，会提前返回null
 
 ```
 
