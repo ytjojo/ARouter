@@ -653,10 +653,10 @@
 2. 路由支持secondarypath，可以配置多个，支持优先级配置，值越大优先级越高
 
 secondarypath可以配置一下四种
-+ 仅有scheme 实际场景仅适用打开web链接 必须是Uri方式路由
-+ 仅有path 常见 Uri和path路由都可以唤起
-+ host+path 常见 必须是Uri方式路由
-+ scheme+host+path 比较严苛 必须是Uri方式路由
++ 仅有scheme 实际场景仅适用打开web链接 必须是Uri方式创建路由
++ 仅有path 比较常见 Uri和path创建路由都可以唤起
++ host+path 必须是Uri方式创建路由
++ scheme+host+path 比较严苛 必须是Uri方式创建路由
 
 ```
 @Route(path = "/test/activity2",secondaryPathes = {"/test/activity2key"})
@@ -871,13 +871,34 @@ public class AppModuleLifecycle implements IModuleLifecycle {
 如何调用
 
 ```
-
+ //列表顺序是按优先级由高到低排列的
  List<IModuleLifecycle> list = ARouter.getInstance().getMultiImplements(IModuleLifecycle.class);
  for (IModuleLifecycle iModuleLifecycle : list) {
       iModuleLifecycle.onCreate();
  }
 
 ```
+9 关于Intent 字段兼容
+如果是Uri构建路由方式（一般是深度链接打开app），转交给ARouter，目标页字段有@Autowired注解，ARouter会自动转换类型
+例如
+
+```
+
+ @Autowired
+    String name;
+
+    @Autowired
+    int age;
+
+    @Autowired(name = "boy")
+    boolean girl;
+
+```
+ARouter.getInstance().build(Uri.parse("arouter://m.aliyun.com/test/activity3?name=alex&age=18&boy=true&high=180")).navigation(this);
+name age girl字段都能正确获取数据值，
+如果链接中拼接参数boy=1标示true boy=0标示false，
+需要自定义IPrivateInterceptor，在拦截器中转换处理，同时@Router配置interceptors字段
+
 
 
 
