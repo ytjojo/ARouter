@@ -913,9 +913,7 @@ public class AppModuleLifecycle implements IModuleLifecycle {
 
 name age girl字段都能正确获取数据值，
 
-如果链接中拼接参数boy=1标示true boy=0标示false，
-
-需要自定义IPrivateInterceptor，在拦截器中转换处理，同时将拦截器class 加入到@Router的interceptors字段中
+特殊类型ARouter无法转换，就需要自定义IPrivateInterceptor，在拦截器中转换处理，同时将拦截器class 加入到@Router的interceptors字段中
 
 
 
