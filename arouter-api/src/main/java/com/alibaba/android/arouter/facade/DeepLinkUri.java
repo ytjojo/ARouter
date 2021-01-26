@@ -34,17 +34,17 @@ public class DeepLinkUri {
     public DeepLinkUri() {
     }
 
-    public DeepLinkUri(String paramString, RouteMeta paramRouteMeta) {
-        this.secondaryPath = paramString;
+    public DeepLinkUri(String secondaryPath, RouteMeta paramRouteMeta) {
+        this.secondaryPath = secondaryPath;
         this.routeMeta = paramRouteMeta;
     }
 
     private String toFixUrl(String url) {
-        int i = url.indexOf("/");
-        String str = url;
-        if (i != -1)
-            str = url.substring(0, TextUtils.delimiterOffset(url, i, url.length(), "?#"));
-        return str;
+        int index = url.indexOf("/");
+        String path = url;
+        if (index != -1)
+            path = url.substring(0, TextUtils.delimiterOffset(url, index, url.length(), "?#"));
+        return path;
     }
 
     public Map<String, String> getPlaceHolderValues(String url) {
@@ -81,8 +81,8 @@ public class DeepLinkUri {
 
         Matcher matcher = this.pattern.matcher(fixUrl);
         boolean matched = matcher.matches();
-        int i = matcher.groupCount();
-        if (matched && i > 0 && this.placeHolders != null) {
+        int groupCount = matcher.groupCount();
+        if (matched && groupCount > 0 && this.placeHolders != null) {
             if (this.placeHolderValues == null){
                 this.placeHolderValues = new HashMap<String, HashMap<String, String>>();
             }
@@ -92,8 +92,8 @@ public class DeepLinkUri {
                 this.placeHolderValues.put(fixUrl, placeHolders);
             }
             int j = this.placeHolders.size();
-            for (i = 0; i < j; i++){
-                placeHolders.put(this.placeHolders.get(i), matcher.group(i + 1));
+            for (groupCount = 0; groupCount < j; groupCount++){
+                placeHolders.put(this.placeHolders.get(groupCount), matcher.group(groupCount + 1));
             }
 
         }

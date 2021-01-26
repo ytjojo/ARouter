@@ -553,9 +553,6 @@ final class _ARouter {
     }
 
     protected void pause(String tag, Postcard postcard) {
-        if (postcard == this.mPausedPostcards.get(tag)) {
-            return;
-        }
         this.mPausedPostcards.put(tag, postcard);
         if (postcard.getNavigationCallback() != null) {
             postcard.getNavigationCallback().onPause(postcard);

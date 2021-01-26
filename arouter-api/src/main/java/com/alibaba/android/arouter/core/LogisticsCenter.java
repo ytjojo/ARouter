@@ -11,7 +11,6 @@ import com.alibaba.android.arouter.facade.InterceptorResult;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.enums.TypeKind;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
-import com.alibaba.android.arouter.facade.template.IRouteMetaRegister;
 import com.alibaba.android.arouter.facade.template.IDeepLinkMatcher;
 import com.alibaba.android.arouter.facade.template.IInterceptorGroup;
 import com.alibaba.android.arouter.facade.template.IMethodInvoker;
@@ -21,6 +20,7 @@ import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
 import com.alibaba.android.arouter.facade.template.IProvider;
 import com.alibaba.android.arouter.facade.template.IProviderGroup;
 import com.alibaba.android.arouter.facade.template.IRouteGroup;
+import com.alibaba.android.arouter.facade.template.IRouteMetaRegister;
 import com.alibaba.android.arouter.facade.template.IRouteRoot;
 import com.alibaba.android.arouter.facade.template.ITemplateGroup;
 import com.alibaba.android.arouter.facade.util.ArrayUtils;
@@ -369,7 +369,7 @@ public class LogisticsCenter {
         Warehouse.routes.put(path, routemeta);
         if (!ArrayUtils.isEmpty(routemeta.getSecondaryPathes()))
             for (String str : routemeta.getSecondaryPathes()) {
-                if (TextUtils.containChars(str, "<{[.(:")) {
+                if (!str.startsWith("/") || TextUtils.containChars(str, "<{[.(:")) {
                     Warehouse.pathMappings.put(str, new DeepLinkUri(str, routemeta));
                 } else {
                     Warehouse.routes.put(str, routemeta);
@@ -496,7 +496,7 @@ public class LogisticsCenter {
             if (CollectionUtils.isEmpty(arrayList)) {
                 arrayList = new ArrayList();
                 for (Class<IPrivateInterceptor> clazz : postcard.getInterceptors()) {
-                    if (IPrivateInterceptor.class.isAssignableFrom(clazz)){
+                    if (IPrivateInterceptor.class.isAssignableFrom(clazz)) {
                         try {
                             arrayList.add((IPrivateInterceptor) clazz.getConstructor().newInstance());
                         } catch (Exception exception) {

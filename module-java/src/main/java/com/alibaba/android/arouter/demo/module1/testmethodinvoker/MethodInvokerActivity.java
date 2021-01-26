@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
+import com.alibaba.android.arouter.demo.module1.testactivity.privateInterceptor.TestPrivateInterceptor;
 import com.alibaba.android.arouter.demo.module1.testinterceptor.Test1Interceptor;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.annotation.Action;
@@ -27,14 +28,14 @@ public class MethodInvokerActivity extends AppCompatActivity {
         startActivity((Intent) ARouter.getInstance().build("/test/getintent").invokeMethod((Context) this));
     }
 
-    @Route(path = "/test/methodInvoker", interceptors = {Test1Interceptor.class})
+    @Route(path = "/test/methodInvoker", interceptors = {TestPrivateInterceptor.class})
     public static void start(Context context, @Query("name") String userName) {
         Intent intent = new Intent(context, MethodInvokerActivity.class);
         intent.putExtra("name", userName);
         context.startActivity(intent);
     }
 
-    @Route(path = "/test/methodInvoker1", interceptors = {Test1Interceptor.class})
+    @Route(path = "/test/methodInvoker1", interceptors = {TestPrivateInterceptor.class})
     public static void startWithAcitonFlag(Activity context, @Query("name") String userName, @Action("defaultAction") String action, @Flags int flag, @RequestCode int requestCode) {
         Intent intent = new Intent(context, MethodInvokerActivity.class);
         intent.putExtra("name", userName);
