@@ -7,9 +7,12 @@ import android.net.Uri;
 import com.alibaba.android.arouter.exception.InitException;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.callback.NavigationCallback;
+import com.alibaba.android.arouter.facade.model.RouteMeta;
 import com.alibaba.android.arouter.facade.template.ILogger;
+import com.alibaba.android.arouter.facade.template.IRouteGroup;
 import com.alibaba.android.arouter.utils.Consts;
 
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -23,6 +26,7 @@ public final class ARouter {
     // Key of raw uri
     public static final String RAW_URI = "NTeRQWvye18AkPd6G";
     public static final String AUTO_INJECT = "wmHzgD4lOj5o4241";
+    public static final String AUTO_INJECT_PLACEHOLDERS = "SU5KRUNURURLRVk=";
 
     private volatile static ARouter instance = null;
     private volatile static boolean hasInit = false;
@@ -183,4 +187,52 @@ public final class ARouter {
     public Object navigation(Context mContext, Postcard postcard, int requestCode, NavigationCallback callback) {
         return _ARouter.getInstance().navigation(mContext, postcard, requestCode, callback);
     }
+
+    /**
+     * Add route group dynamic.
+     * @param group route group.
+     * @return add result.
+     */
+    public boolean addRouteGroup(IRouteGroup group) {
+        return _ARouter.getInstance().addRouteGroup(group);
+    }
+
+
+    public <T> List<T> getMultiImplements(Class<? extends T> keyClass) {
+        return _ARouter.getInstance().getMultiImplements(keyClass);
+    }
+
+    public void pause(String tag, Postcard postcard) {
+        _ARouter.getInstance().pause(tag, postcard);
+    }
+
+
+    public Object invokeMethod(Context context, Postcard postcard, NavigationCallback navigationCallback) {
+        return _ARouter.getInstance().invokeMethod(context, postcard, navigationCallback);
+    }
+
+    public <T> T navigationWithTemplate(Class<? extends T> templateClass) {
+        return _ARouter.getInstance().navigationWithTemplate(templateClass);
+    }
+
+    public void putRoute(String tag, RouteMeta routemeta) {
+        _ARouter.getInstance().putRoute(tag, routemeta);
+    }
+
+    public void removePaused(String tag) {
+        _ARouter.getInstance().removePaused(tag);
+    }
+
+    public void removePaused(Postcard postcard) {
+        _ARouter.getInstance().removePaused(postcard);
+    }
+
+    public void resumePausedPostcard(Context context, String tag) {
+        _ARouter.getInstance().resumePausedPostcard(context, tag);
+    }
+
+    public boolean isPaused(Postcard postcard) {
+        return _ARouter.getInstance().isPaused(postcard);
+    }
+
 }

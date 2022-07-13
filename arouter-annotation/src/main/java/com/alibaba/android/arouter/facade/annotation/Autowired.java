@@ -25,4 +25,6 @@ public @interface Autowired {
 
     // Description of the field
     String desc() default "";
+
+    String[] alternate() default {};
 }

@@ -8,7 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v4.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,18 +17,29 @@ import com.alibaba.android.arouter.core.LogisticsCenter;
 import com.alibaba.android.arouter.exception.HandlerException;
 import com.alibaba.android.arouter.exception.InitException;
 import com.alibaba.android.arouter.exception.NoRouteFoundException;
+import com.alibaba.android.arouter.facade.InterceptorResult;
 import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.callback.InterceptorCallback;
 import com.alibaba.android.arouter.facade.callback.NavigationCallback;
+import com.alibaba.android.arouter.facade.model.RouteMeta;
 import com.alibaba.android.arouter.facade.service.*;
 import com.alibaba.android.arouter.facade.template.ILogger;
+import com.alibaba.android.arouter.facade.template.IMethodInvoker;
+import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
+import com.alibaba.android.arouter.facade.template.IRouteGroup;
 import com.alibaba.android.arouter.thread.DefaultPoolExecutor;
+import com.alibaba.android.arouter.utils.ActivityStartUtil;
+import com.alibaba.android.arouter.utils.CollectionUtils;
 import com.alibaba.android.arouter.utils.Consts;
 import com.alibaba.android.arouter.utils.DefaultLogger;
+import com.alibaba.android.arouter.utils.GlobleCallbackNotifer;
 import com.alibaba.android.arouter.utils.TextUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -46,6 +57,7 @@ final class _ARouter {
     private volatile static _ARouter instance = null;
     private volatile static boolean hasInit = false;
     private volatile static ThreadPoolExecutor executor = DefaultPoolExecutor.getInstance();
+    private HashMap<String, Postcard> mPausedPostcards = new HashMap<String, Postcard>();
     private static Handler mHandler;
     private static Context mContext;
 
@@ -245,18 +257,21 @@ final class _ARouter {
 
     protected <T> T navigation(Class<? extends T> service) {
         try {
-            Postcard postcard = LogisticsCenter.buildProvider(service.getName());
+            Postcard postcard = LogisticsCenter.buildProvider(service);
 
             // Compatible 1.0.5 compiler sdk.
             // Earlier versions did not use the fully qualified name to get the service
             if (null == postcard) {
                 // No service, or this service in old version.
-                postcard = LogisticsCenter.buildProvider(service.getSimpleName());
+                postcard = LogisticsCenter.buildProvider(service);
             }
 
             if (null == postcard) {
                 return null;
             }
+
+            // Set application to postcard.
+            postcard.setContext(mContext);
 
             LogisticsCenter.completion(postcard);
             return (T) postcard.getProvider();
@@ -281,6 +296,11 @@ final class _ARouter {
             return null;
         }
 
+        // Set context to postcard.
+        postcard.setContext(null == context ? mContext : context);
+        postcard.setRequestCode(requestCode);
+        postcard.setNavigationCallback(callback);
+
         try {
             LogisticsCenter.completion(postcard);
         } catch (NoRouteFoundException ex) {
@@ -302,11 +322,16 @@ final class _ARouter {
                 callback.onLost(postcard);
             } else {
                 // No callback for this invoke, then we use the global degrade service.
-                DegradeService degradeService = ARouter.getInstance().navigation(DegradeService.class);
-                if (null != degradeService) {
-                    degradeService.onLost(context, postcard);
+                List<DegradeService> degradeSevices = ARouter.getInstance().getMultiImplements(DegradeService.class);
+                if (!CollectionUtils.isEmpty(degradeSevices)) {
+                    for (DegradeService degradeService : degradeSevices) {
+                        if (degradeService.onLost(postcard.getContext(), postcard)) {
+                            break;
+                        }
+                    }
                 }
             }
+            GlobleCallbackNotifer.onLost(postcard);
 
             return null;
         }
@@ -314,8 +339,19 @@ final class _ARouter {
         if (null != callback) {
             callback.onFound(postcard);
         }
+        GlobleCallbackNotifer.onFound(postcard);
+        if (postcard.isForIntent()) {
+            postcard.greenChannel();
+        }
+        return intercept(context, postcard, requestCode, callback);
+    }
 
-        if (!postcard.isGreenChannel()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
+    private Object intercept(final Context context, final Postcard postcard, final int requestCode, final NavigationCallback callback) {
+        if(context != null && context != postcard.getContext()){
+            postcard.setContext(context);
+        }
+
+        if (!postcard.isGreenChannel() && LogisticsCenter.hasInterceptors()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
             interceptorService.doInterceptions(postcard, new InterceptorCallback() {
                 /**
                  * Continue process
@@ -323,8 +359,14 @@ final class _ARouter {
                  * @param postcard route meta
                  */
                 @Override
-                public void onContinue(Postcard postcard) {
-                    _navigation(context, postcard, requestCode, callback);
+                public void onContinue(final Postcard postcard) {
+                    runInMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            _navigation(postcard, requestCode, callback);
+                        }
+                    });
+
                 }
 
                 /**
@@ -334,48 +376,47 @@ final class _ARouter {
                  */
                 @Override
                 public void onInterrupt(Throwable exception) {
-                    if (null != callback) {
+                    if (callback != null) {
                         callback.onInterrupt(postcard);
                     }
-
+                    GlobleCallbackNotifer.onInterrupt(postcard);
                     logger.info(Consts.TAG, "Navigation failed, termination by interceptor : " + exception.getMessage());
+                }
+
+                @Override
+                public void onPause(Postcard postcard) {
+                    logger.info(Consts.TAG, "Navigation failed, termination by interceptor ");
                 }
             });
         } else {
-            return _navigation(context, postcard, requestCode, callback);
+            return _navigation(postcard, requestCode, callback);
         }
-
         return null;
     }
 
-    private Object _navigation(final Context context, final Postcard postcard, final int requestCode, final NavigationCallback callback) {
-        final Context currentContext = null == context ? mContext : context;
+    private Object _navigation(final Postcard postcard, final int requestCode, final NavigationCallback callback) {
+
+        if (isPaused(postcard)) {
+            return null;
+        } else {
+            InterceptorResult result = LogisticsCenter.doPrivateInterceptions(postcard);
+            if (result != InterceptorResult.CONTINUE) {
+                return null;
+            }
+        }
+        final Context currentContext = postcard.getContext();
 
         switch (postcard.getType()) {
             case ACTIVITY:
-                // Build intent
-                final Intent intent = new Intent(currentContext, postcard.getDestination());
-                intent.putExtras(postcard.getExtras());
-
-                // Set flags.
-                int flags = postcard.getFlags();
-                if (-1 != flags) {
-                    intent.setFlags(flags);
-                } else if (!(currentContext instanceof Activity)) {    // Non activity, need less one flag.
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                postcard.buildIntent(currentContext);
+                if (postcard.isForIntent()) {
+                    return postcard.getIntent();
                 }
-
-                // Set Actions
-                String action = postcard.getAction();
-                if (!TextUtils.isEmpty(action)) {
-                    intent.setAction(action);
-                }
-
                 // Navigation in main looper.
                 runInMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        startActivity(requestCode, currentContext, intent, postcard, callback);
+                        ActivityStartUtil.startActivity(requestCode, currentContext, postcard.getIntent(), postcard, callback);
                     }
                 });
 
@@ -385,13 +426,13 @@ final class _ARouter {
             case BOARDCAST:
             case CONTENT_PROVIDER:
             case FRAGMENT:
-                Class fragmentMeta = postcard.getDestination();
+                Class<?> fragmentMeta = postcard.getDestination();
                 try {
                     Object instance = fragmentMeta.getConstructor().newInstance();
                     if (instance instanceof Fragment) {
                         ((Fragment) instance).setArguments(postcard.getExtras());
-                    } else if (instance instanceof android.support.v4.app.Fragment) {
-                        ((android.support.v4.app.Fragment) instance).setArguments(postcard.getExtras());
+                    } else if (instance instanceof androidx.fragment.app.Fragment) {
+                        ((androidx.fragment.app.Fragment) instance).setArguments(postcard.getExtras());
                     }
 
                     return instance;
@@ -399,6 +440,7 @@ final class _ARouter {
                     logger.error(Consts.TAG, "Fetch fragment instance error, " + TextUtils.formatStackTrace(ex.getStackTrace()));
                 }
             case METHOD:
+                return invokeMethodInternal(postcard, postcard.getNavigationCallback());
             case SERVICE:
             default:
                 return null;
@@ -444,4 +486,161 @@ final class _ARouter {
             callback.onArrival(postcard);
         }
     }
+
+    boolean addRouteGroup(IRouteGroup group) {
+        if (null == group) {
+            return false;
+        }
+
+        String groupName = null;
+
+        try {
+            // Extract route meta.
+            Map<String, RouteMeta> dynamicRoute = new HashMap<>();
+            group.loadInto(dynamicRoute);
+
+            // Check route meta.
+            for (Map.Entry<String, RouteMeta> route : dynamicRoute.entrySet()) {
+                String path = route.getKey();
+                String groupByExtract = extractGroup(path);
+                RouteMeta meta = route.getValue();
+
+                if (null == groupName) {
+                    groupName = groupByExtract;
+                }
+
+                if (null == groupName || !groupName.equals(groupByExtract) || !groupName.equals(meta.getGroup())) {
+                    // Group name not consistent
+                    return false;
+                }
+            }
+
+            LogisticsCenter.addRouteGroupDynamic(groupName, group);
+
+            logger.info(Consts.TAG, "Add route group [" + groupName + "] finish, " + dynamicRoute.size() + " new route meta.");
+
+            return true;
+        } catch (Exception exception) {
+            logger.error(Consts.TAG, "Add route group dynamic exception! " + exception.getMessage());
+        }
+
+        return false;
+    }
+
+
+    protected <T> List<T> getMultiImplements(Class<? extends T> paramClass) {
+        return LogisticsCenter.getMultiImplements(paramClass);
+    }
+
+    protected Object invokeMethodInternal(Postcard postcard, NavigationCallback navigationCallback) {
+        Context context = postcard.getContext();
+        if (context == null) {
+            context = mContext;
+        }
+        IMethodInvoker iMethodInvoker = LogisticsCenter.getIInvokeMethod((Class<IMethodInvoker>) postcard.getDestination());
+        LogisticsCenter.createPrivateInterceptors(postcard);
+        Object object = iMethodInvoker.invoke(context, postcard);
+        if (navigationCallback != null) {
+            navigationCallback.onArrival(postcard);
+        }
+        if (!CollectionUtils.isEmpty(postcard.getPrivateInterceptors())) {
+            for (IPrivateInterceptor interceptor : postcard.getPrivateInterceptors()) {
+                interceptor.onArrival(postcard.getContext(), postcard);
+            }
+        }
+        GlobleCallbackNotifer.onArrival(postcard);
+        return object;
+    }
+
+    protected void pause(String tag, Postcard postcard) {
+        this.mPausedPostcards.put(tag, postcard);
+        if (postcard.getNavigationCallback() != null) {
+            postcard.getNavigationCallback().onPause(postcard);
+        }
+        GlobleCallbackNotifer.onPause(postcard);
+    }
+
+    protected Object invokeMethod(Context paramContext, Postcard postcard, NavigationCallback paramNavigationCallback) {
+        return navigation(paramContext, postcard, -1, paramNavigationCallback);
+    }
+
+    protected boolean isPaused(Postcard postcard) {
+        return (!this.mPausedPostcards.isEmpty() && this.mPausedPostcards.values().contains(postcard));
+    }
+
+    protected <T> T navigationWithTemplate(Class<? extends T> templateClass) {
+        try {
+            return (T) LogisticsCenter.buildTemplateImpl(templateClass);
+        } catch (Exception exception) {
+            logger.warning("ARouter::", exception.getMessage());
+            return null;
+        }
+    }
+
+    protected void putRoute(String path, RouteMeta routemeta) {
+        LogisticsCenter.putRoute(path, routemeta);
+    }
+
+    protected boolean removePaused(String tag) {
+        Postcard postcard = this.mPausedPostcards.remove(tag);
+        if (postcard != null) {
+            onInterrupt(null, postcard);
+            return true;
+        }
+        return false;
+
+    }
+
+    protected boolean removePaused(Postcard postcard) {
+        for (Map.Entry<String, Postcard> entry : mPausedPostcards.entrySet()) {
+            if (entry.getValue() == postcard) {
+                mPausedPostcards.remove(entry.getKey());
+                break;
+            }
+        }
+        if (postcard != null) {
+            onInterrupt(null, postcard);
+            return true;
+        }
+        return false;
+
+    }
+
+    protected void onInterrupt(Object exception, Postcard postcard) {
+        if (exception != null) {
+            postcard.setTag(exception);
+        }
+        if (postcard.getNavigationCallback() != null) {
+            postcard.getNavigationCallback().onInterrupt(postcard);
+        }
+        GlobleCallbackNotifer.onInterrupt(postcard);
+    }
+
+    protected void onInterrupt(Object exception, String tag) {
+        if (exception == null) {
+            exception = new HandlerException("No message.");
+        }
+        final Postcard postcard = getPausedPostcard(tag);
+        if (removePaused(tag)) {
+            onInterrupt(exception, postcard);
+        }
+    }
+
+    protected Postcard getPausedPostcard(String tag) {
+        return mPausedPostcards.get(tag);
+    }
+
+    protected void resumePausedPostcard(Context context, String tag) {
+        Postcard postcard = this.mPausedPostcards.remove(tag);
+        if (postcard == null) {
+            logger.error(Consts.TAG, "resumePausePostcard with tag " + tag + " not fonnd");
+            return;
+        }
+        if(postcard.getType() == null || postcard.getDestination() == null){
+            navigation(context,postcard,postcard.getRequestCode(),postcard.getNavigationCallback());
+        }else {
+            intercept(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
+        }
+    }
+
 }

@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @version 1.0
  * @since 16/8/15 下午9:29
  */
-@Target({ElementType.TYPE})
+@Target({ElementType.TYPE,ElementType.METHOD, ElementType.CONSTRUCTOR})
 @Retention(RetentionPolicy.CLASS)
 public @interface Route {
 
@@ -41,4 +41,10 @@ public @interface Route {
      * The priority of route.
      */
     int priority() default -1;
+
+    Class[] interceptors() default {};
+
+    String[] secondaryPathes() default {};
+
+    boolean exported() default true;
 }

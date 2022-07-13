@@ -28,85 +28,52 @@ public class RouteMeta {
 
     private Map<String, Autowired> injectConfig;  // Cache inject config.
 
+    private Class[] interceptors;
+
+    private Class keyForImplement;
+
+    private String rawPath;
+
+    private String[] secondaryPathes;
+
     public RouteMeta() {
     }
 
-    /**
-     * For versions of 'compiler' less than 1.0.7, contain 1.0.7
-     *
-     * @param type        type
-     * @param destination destination
-     * @param path        path
-     * @param group       group
-     * @param priority    priority
-     * @param extra       extra
-     * @return this
-     */
-    public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, int priority, int extra) {
-        return new RouteMeta(type, null, destination, null, path, group, null, priority, extra);
-    }
 
-    /**
-     * For versions of 'compiler' greater than 1.0.7
-     *
-     * @param type        type
-     * @param destination destination
-     * @param path        path
-     * @param group       group
-     * @param paramsType  paramsType
-     * @param priority    priority
-     * @param extra       extra
-     * @return this
-     */
-    public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, Map<String, Integer> paramsType, int priority, int extra) {
-        return new RouteMeta(type, null, destination, null, path, group, paramsType, priority, extra);
-    }
-
-    /**
-     * Type
-     *
-     * @param route       route
-     * @param destination destination
-     * @param type        type
-     */
     public RouteMeta(Route route, Class<?> destination, RouteType type) {
-        this(type, null, destination, route.name(), route.path(), route.group(), null, route.priority(), route.extras());
+        this(type, null, destination, route.name(), route.path(), route.group(), null, null, null, route.priority(), route.extras());
     }
 
-    /**
-     * Type
-     *
-     * @param route      route
-     * @param rawType    rawType
-     * @param type       type
-     * @param paramsType paramsType
-     */
     public RouteMeta(Route route, Element rawType, RouteType type, Map<String, Integer> paramsType) {
-        this(type, rawType, null, route.name(), route.path(), route.group(), paramsType, route.priority(), route.extras());
+        this(type, rawType, null, route.name(), route.path(), route.group(), paramsType, route.secondaryPathes(), null, route.priority(), route.extras());
     }
 
-    /**
-     * Type
-     *
-     * @param type        type
-     * @param rawType     rawType
-     * @param destination destination
-     * @param path        path
-     * @param group       group
-     * @param paramsType  paramsType
-     * @param priority    priority
-     * @param extra       extra
-     */
-    public RouteMeta(RouteType type, Element rawType, Class<?> destination, String name, String path, String group, Map<String, Integer> paramsType, int priority, int extra) {
+    public RouteMeta(RouteType type, Class<?> destination, Class keyForImplement, int priority) {
+        this.type = type;
+        this.destination = destination;
+        this.keyForImplement = keyForImplement;
+        this.priority = priority;
+    }
+
+    public RouteMeta(RouteType type, Element rawType, Class<?> destination, String name, String path, String group, Map<String, Integer> paramsType, String[] secondaryPathes, Class[] interceptors, int priority, int extra) {
         this.type = type;
         this.name = name;
         this.destination = destination;
         this.rawType = rawType;
         this.path = path;
+        this.rawPath = path;
         this.group = group;
         this.paramsType = paramsType;
+        this.secondaryPathes = secondaryPathes;
+        this.interceptors = interceptors;
         this.priority = priority;
         this.extra = extra;
+    }
+
+    public RouteMeta(Element rawType, RouteType type, int priority) {
+        this.rawType = rawType;
+        this.type = type;
+        this.priority = priority;
     }
 
     public Map<String, Integer> getParamsType() {
@@ -163,7 +130,10 @@ public class RouteMeta {
     }
 
     public String getGroup() {
-        return group;
+        if (group == null || group.isEmpty()) {
+            group = path.substring(1, path.indexOf("/", 1));
+        }
+        return this.group;
     }
 
     public RouteMeta setGroup(String group) {
@@ -197,6 +167,34 @@ public class RouteMeta {
         this.name = name;
     }
 
+    public Class[] getInterceptors() {
+        return this.interceptors;
+    }
+
+    public Class getKeyForImplement() {
+        return this.keyForImplement;
+    }
+
+    public String getRawPath() {
+        return this.rawPath;
+    }
+
+    public String[] getSecondaryPathes() {
+        return this.secondaryPathes;
+    }
+
+    public void setInterceptors(Class[] interceptorClasses) {
+        this.interceptors = interceptorClasses;
+    }
+
+    public void setKeyForImplement(Class keyForImplement) {
+        this.keyForImplement = keyForImplement;
+    }
+
+    public void setSecondaryPathes(String[] secondaryPathes) {
+        this.secondaryPathes = secondaryPathes;
+    }
+
     @Override
     public String toString() {
         return "RouteMeta{" +
@@ -211,4 +209,30 @@ public class RouteMeta {
                 ", name='" + name + '\'' +
                 '}';
     }
+
+
+    public static RouteMeta build(RouteType type, Class<?> destination, Class keyForImplement, int priority) {
+        return new RouteMeta(type, destination, keyForImplement, priority);
+    }
+
+    public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, Map<String, Integer> paramsType, int priority, int extra) {
+        return new RouteMeta(type, null, destination, null, path, group, paramsType, null, null, priority, extra);
+    }
+
+    public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, Map<String, Integer> paramsType, String[] secondaryPathes, Class[] interceptors, int priority, int extra) {
+        return new RouteMeta(type, null, destination, null, path, group, paramsType, secondaryPathes, interceptors, priority, extra);
+    }
+    public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, int priority, int extra) {
+        return new RouteMeta(type, null, destination, null, path, group, null, null, null, priority, extra);
+    }
+
+    public static RouteMeta buildSimpleActivity( String path,Class<?> clazz) {
+        return RouteMeta.build(RouteType.ACTIVITY, clazz, path, null, null, null, null, -1, -2147483648);
+    }
+
+    public static RouteMeta buildSimpleFragment( String path,Class<?> clazz) {
+        return RouteMeta.build(RouteType.FRAGMENT, clazz, path, null, null, null, null, -1, -2147483648);
+    }
+
+
 }

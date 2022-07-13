@@ -1,14 +1,21 @@
 package com.alibaba.android.arouter.compiler.processor;
 
 import com.alibaba.android.arouter.compiler.entity.RouteDoc;
+import com.alibaba.android.arouter.compiler.utils.AnnotationElementUtil;
 import com.alibaba.android.arouter.compiler.utils.Consts;
+import com.alibaba.android.arouter.compiler.utils.MethodInvokerGenerator;
+import com.alibaba.android.arouter.facade.annotation.Action;
 import com.alibaba.android.arouter.facade.annotation.Autowired;
+import com.alibaba.android.arouter.facade.annotation.Flags;
+import com.alibaba.android.arouter.facade.annotation.Query;
+import com.alibaba.android.arouter.facade.annotation.RequestCode;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.facade.enums.RouteType;
 import com.alibaba.android.arouter.facade.enums.TypeKind;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -20,6 +27,7 @@ import com.squareup.javapoet.WildcardTypeName;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -38,7 +46,10 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.StandardLocation;
@@ -52,6 +63,7 @@ import static com.alibaba.android.arouter.compiler.utils.Consts.IROUTE_GROUP;
 import static com.alibaba.android.arouter.compiler.utils.Consts.ITROUTE_ROOT;
 import static com.alibaba.android.arouter.compiler.utils.Consts.METHOD_LOAD_INTO;
 import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_GROUP;
+import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_METHODEINVOKER;
 import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_PROVIDER;
 import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_ROOT;
 import static com.alibaba.android.arouter.compiler.utils.Consts.PACKAGE_OF_GENERATE_DOCS;
@@ -60,6 +72,7 @@ import static com.alibaba.android.arouter.compiler.utils.Consts.SEPARATOR;
 import static com.alibaba.android.arouter.compiler.utils.Consts.SERVICE;
 import static com.alibaba.android.arouter.compiler.utils.Consts.WARNING_TIPS;
 import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 
 /**
  * A processor used for find route.
@@ -164,12 +177,19 @@ public class RouteProcessor extends BaseProcessor {
                     ClassName.get(RouteMeta.class)
             );
 
+            ParameterizedTypeName inputProviderMapTypeOfGroup = ParameterizedTypeName.get(
+                    ClassName.get(Map.class),
+                    ClassName.get(Class.class),
+                    ClassName.get(RouteMeta.class)
+            );
+
+
             /*
               Build input param name.
              */
             ParameterSpec rootParamSpec = ParameterSpec.builder(inputMapTypeOfRoot, "routes").build();
             ParameterSpec groupParamSpec = ParameterSpec.builder(inputMapTypeOfGroup, "atlas").build();
-            ParameterSpec providerParamSpec = ParameterSpec.builder(inputMapTypeOfGroup, "providers").build();  // Ps. its param type same as groupParamSpec!
+            ParameterSpec providerParamSpec = ParameterSpec.builder(inputProviderMapTypeOfGroup, "providers").build();  // Ps. its param type same as groupParamSpec!
 
             /*
               Build method : 'loadInto'
@@ -178,15 +198,32 @@ public class RouteProcessor extends BaseProcessor {
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .addParameter(rootParamSpec);
-
             //  Follow a sequence, find out metas of group first, generate java file, then statistics them as root.
             for (Element element : routeElements) {
                 TypeMirror tm = element.asType();
                 Route route = element.getAnnotation(Route.class);
                 RouteMeta routeMeta;
+                if (tm.getKind() == javax.lang.model.type.TypeKind.EXECUTABLE) {
+                    ExecutableElement executable = MoreElements.asExecutable(element);
+                    if (element.getKind() == ElementKind.METHOD) {
+                        if (executable.getModifiers().contains(PUBLIC) && executable.getModifiers().contains(STATIC)) {
+                            routeMeta = new RouteMeta(route, executable, RouteType.METHOD, null);
+                        } else {
+                            throw new RuntimeException("The @Route is marked on unsupported class, look at [" + tm.toString() + "].");
+                        }
 
+                    } else if (element.getKind() == ElementKind.CONSTRUCTOR) {
+                        if (executable.getModifiers().contains(PUBLIC)) {
+                            routeMeta = new RouteMeta(route, executable, RouteType.METHOD, null);
+                        } else {
+                            throw new RuntimeException("The @Route is marked on unsupported class, look at [" + tm.toString() + "].");
+                        }
+                    } else {
+                        throw new RuntimeException("The @Route is marked on unsupported class, look at [" + tm.toString() + "].");
+                    }
+                }
                 // Activity or Fragment
-                if (types.isSubtype(tm, type_Activity) || types.isSubtype(tm, fragmentTm) || types.isSubtype(tm, fragmentTmV4)) {
+                else if (types.isSubtype(tm, type_Activity) || types.isSubtype(tm, fragmentTm) || types.isSubtype(tm, fragmentTmV4)) {
                     // Get all fields annotation by @Autowired
                     Map<String, Integer> paramsType = new HashMap<>();
                     Map<String, Autowired> injectConfig = new HashMap<>();
@@ -222,6 +259,7 @@ public class RouteProcessor extends BaseProcessor {
                     .addParameter(providerParamSpec);
 
             Map<String, List<RouteDoc>> docSource = new HashMap<>();
+            MethodSpec.Builder invokeMethodSpec = null;
 
             // Start generate java source, structure is divided into upper and lower levels, used for demand initialization.
             for (Map.Entry<String, Set<RouteMeta>> entry : groupMap.entrySet()) {
@@ -239,7 +277,12 @@ public class RouteProcessor extends BaseProcessor {
                 for (RouteMeta routeMeta : groupData) {
                     RouteDoc routeDoc = extractDocInfo(routeMeta);
 
-                    ClassName className = ClassName.get((TypeElement) routeMeta.getRawType());
+                    ClassName className = null;
+                    if (routeMeta.getRawType().asType().getKind() == javax.lang.model.type.TypeKind.DECLARED) {
+                        className = ClassName.get((TypeElement) routeMeta.getRawType());
+                    } else {
+                        className = ClassName.get(PACKAGE_OF_GENERATE_FILE,NAME_OF_METHODEINVOKER + SEPARATOR + moduleName);
+                    }
 
                     switch (routeMeta.getType()) {
                         case PROVIDER:  // Need cache provider's super class
@@ -250,8 +293,8 @@ public class RouteProcessor extends BaseProcessor {
                                 if (types.isSameType(tm, iProvider)) {   // Its implements iProvider interface himself.
                                     // This interface extend the IProvider, so it can be used for mark provider
                                     loadIntoMethodOfProviderBuilder.addStatement(
-                                            "providers.put($S, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, null, " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
-                                            (routeMeta.getRawType()).toString(),
+                                            "providers.put($T.class, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, null, " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
+                                            className,
                                             routeMetaCn,
                                             routeTypeCn,
                                             className,
@@ -260,8 +303,8 @@ public class RouteProcessor extends BaseProcessor {
                                 } else if (types.isSubtype(tm, iProvider)) {
                                     // This interface extend the IProvider, so it can be used for mark provider
                                     loadIntoMethodOfProviderBuilder.addStatement(
-                                            "providers.put($S, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, null, " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
-                                            tm.toString(),    // So stupid, will duplicate only save class name.
+                                            "providers.put($T.class, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, null, " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
+                                            className(getClassName(tm)),    // So stupid, will duplicate only save class name.
                                             routeMetaCn,
                                             routeTypeCn,
                                             className,
@@ -269,6 +312,10 @@ public class RouteProcessor extends BaseProcessor {
                                             routeMeta.getGroup());
                                 }
                             }
+                            break;
+                        case METHOD:
+                            invokeMethodSpec = MethodInvokerGenerator.addStatement(invokeMethodSpec,routeMeta,this);
+
                             break;
                         default:
                             break;
@@ -283,9 +330,13 @@ public class RouteProcessor extends BaseProcessor {
 
                         for (Map.Entry<String, Integer> types : paramsType.entrySet()) {
                             mapBodyBuilder.append("put(\"").append(types.getKey()).append("\", ").append(types.getValue()).append("); ");
-
                             RouteDoc.Param param = new RouteDoc.Param();
                             Autowired injectConfig = injectConfigs.get(types.getKey());
+                            if (!ArrayUtils.isEmpty(injectConfig.alternate())) {
+                                for (String key : injectConfig.alternate()) {
+                                    mapBodyBuilder.append("put(\"").append(key).append("\", ").append(types.getValue()).append("); ");
+                                }
+                            }
                             param.setKey(types.getKey());
                             param.setType(TypeKind.values()[types.getValue()].name().toLowerCase());
                             param.setDescription(injectConfig.desc());
@@ -297,20 +348,53 @@ public class RouteProcessor extends BaseProcessor {
                         routeDoc.setParams(paramList);
                     }
                     String mapBody = mapBodyBuilder.toString();
+                    StringBuilder secondaryPathBuilder = null;
+                    if (!ArrayUtils.isEmpty(routeMeta.getSecondaryPathes())) {
+                        secondaryPathBuilder = new StringBuilder("new String[]{");
+                        int length = routeMeta.getSecondaryPathes().length;
+                        for (int i = 0; i < length; i++) {
+                            String path = routeMeta.getSecondaryPathes()[i];
+                            secondaryPathBuilder.append("\"");
+                            secondaryPathBuilder.append(path);
+                            secondaryPathBuilder.append("\"");
+                            if (i != length - 1) {
+                                secondaryPathBuilder.append(", ");
+                            }
+                        }
+                        secondaryPathBuilder.append("}");
 
+                    }
+                    StringBuilder interceptorBuilder = null;
+                    List<TypeElement> annotationTypeElements = AnnotationElementUtil.getAnnotationTypes(routeMeta.getRawType(), Route.class, "interceptors");
+                    if (!CollectionUtils.isEmpty(annotationTypeElements)) {
+                        interceptorBuilder = new StringBuilder("new Class[]{");
+                        int size = annotationTypeElements.size();
+                        for (int i = 0; i < size; i++) {
+                            String path = annotationTypeElements.get(i).toString();
+                            interceptorBuilder.append(path);
+                            interceptorBuilder.append(".class");
+                            if (i != size - 1) {
+                                interceptorBuilder.append(", ");
+                            }
+                        }
+                        interceptorBuilder.append("}");
+                    }
                     loadIntoMethodOfGroupBuilder.addStatement(
-                            "atlas.put($S, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, " + (StringUtils.isEmpty(mapBody) ? null : ("new java.util.HashMap<String, Integer>(){{" + mapBodyBuilder.toString() + "}}")) + ", " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
+                            "atlas.put($S, $T.build($T." + routeMeta.getType() + ", $T.class, $S, $S, " + (StringUtils.isEmpty(mapBody) ? null : ("new java.util.HashMap<String, Integer>(){{" + mapBodyBuilder.toString() + "}}")) + ", " + "$L" + ", " + "$L" + ", " + routeMeta.getPriority() + ", " + routeMeta.getExtra() + "))",
                             routeMeta.getPath(),
                             routeMetaCn,
                             routeTypeCn,
                             className,
                             routeMeta.getPath().toLowerCase(),
-                            routeMeta.getGroup().toLowerCase());
+                            routeMeta.getGroup().toLowerCase(),
+                            secondaryPathBuilder == null ? "null" : secondaryPathBuilder.toString(),
+                            interceptorBuilder == null ? "null" : interceptorBuilder.toString()
+
+                    );
 
                     routeDoc.setClassName(className.toString());
                     routeDocList.add(routeDoc);
                 }
-
                 // Generate groups
                 String groupFileName = NAME_OF_GROUP + groupName;
                 JavaFile.builder(PACKAGE_OF_GENERATE_FILE,
@@ -365,6 +449,13 @@ public class RouteProcessor extends BaseProcessor {
                             .build()
             ).build().writeTo(mFiler);
 
+            if(invokeMethodSpec != null){
+                invokeMethodSpec.endControlFlow();
+                invokeMethodSpec.addStatement("return null");
+                MethodInvokerGenerator.writeMethodInvokeFile(moduleName,invokeMethodSpec,this);
+            }
+
+
             logger.info(">>> Generated root, name is " + rootFileName + " <<<");
         }
     }
@@ -380,7 +471,7 @@ public class RouteProcessor extends BaseProcessor {
                 // It must be field, then it has annotation, but it not be provider.
                 Autowired paramConfig = field.getAnnotation(Autowired.class);
                 String injectName = StringUtils.isEmpty(paramConfig.name()) ? field.getSimpleName().toString() : paramConfig.name();
-                paramsType.put(injectName, typeUtils.typeExchange(field));
+                paramsType.put(injectName, typeUtils.typeExchange(field.asType()));
                 injectConfig.put(injectName, paramConfig);
             }
         }

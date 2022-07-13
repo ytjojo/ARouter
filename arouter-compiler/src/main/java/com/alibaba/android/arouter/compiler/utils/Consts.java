@@ -19,16 +19,35 @@ public class Consts {
     public static final String NAME_OF_PROVIDER = PROJECT + SEPARATOR + "Providers";
     public static final String NAME_OF_GROUP = PROJECT + SEPARATOR + "Group" + SEPARATOR;
     public static final String NAME_OF_INTERCEPTOR = PROJECT + SEPARATOR + "Interceptors";
+    public static final String NAME_OF_MULTIIMPLEMENT = PROJECT + SEPARATOR + "MultiImplements";
+    public static final String NAME_OF_TEMPLATE = PROJECT + SEPARATOR + "Templates";
     public static final String NAME_OF_AUTOWIRED = SEPARATOR + PROJECT + SEPARATOR + "Autowired";
+
+
+    public static final String NAME_OF_METHODEINVOKER = PROJECT + SEPARATOR + "MethodInvoker";
+    public static final String NAME_OF_MULTIIMEPLEMENT_GROUP = PROJECT + SEPARATOR + "MultiImplementsGroup";
+    public static final String NAME_OF_TEMPLATE_GROUP = PROJECT + SEPARATOR + "TemplateGroup";
+
+
     public static final String PACKAGE_OF_GENERATE_FILE = "com.alibaba.android.arouter.routes";
     public static final String PACKAGE_OF_GENERATE_DOCS = "com.alibaba.android.arouter.docs";
 
     // System interface
     public static final String ACTIVITY = "android.app.Activity";
     public static final String FRAGMENT = "android.app.Fragment";
-    public static final String FRAGMENT_V4 = "android.support.v4.app.Fragment";
+    public static final String FRAGMENT_V4 = "androidx.fragment.app.Fragment";
     public static final String SERVICE = "android.app.Service";
     public static final String PARCELABLE = "android.os.Parcelable";
+    public static final String BUNDLE = "android.os.Bundle";
+    public static final String POSTCARD = "com.alibaba.android.arouter.facade.Postcard";
+    public static final String CONTEXT = "android.content.Context";
+    public static final String URI = "android.net.Uri";
+    public static final String INTENT = "android.content.Intent";
+    public static final String AROUTER = "com.alibaba.android.arouter.launcher.ARouter";
+
+
+
+    public static final String NAVIGATIONCALLBACK = "com.alibaba.android.arouter.facade.callback.NavigationCallback";
 
     // Java type
     private static final String LANG = "java.lang";
@@ -52,9 +71,13 @@ public class Consts {
     public static final String IPROVIDER_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IProviderGroup";
     public static final String IINTERCEPTOR = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IInterceptor";
     public static final String IINTERCEPTOR_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IInterceptorGroup";
+    public static final String MULTIIMPLEMENT_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMultiImplementGroup";
     public static final String ITROUTE_ROOT = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IRouteRoot";
     public static final String IROUTE_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IRouteGroup";
+    public static final String TEMPLATE_GROUP = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".ITemplateGroup";
     public static final String ISYRINGE = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".ISyringe";
+    public static final String IMETHODERINVOKER = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMethodInvoker";
+    public static final String IMULTIIMPLEMENTREGISTER = FACADE_PACKAGE + TEMPLATE_PACKAGE + ".IMultiImplementRegister";
     public static final String JSON_SERVICE = FACADE_PACKAGE + SERVICE_PACKAGE + ".SerializationService";
     public static final String TYPE_WRAPPER = FACADE_PACKAGE + MODEL_PACKAGE + ".TypeWrapper";
 
@@ -82,4 +105,8 @@ public class Consts {
     public static final String ANNOTATION_TYPE_INTECEPTOR = FACADE_PACKAGE + ".annotation.Interceptor";
     public static final String ANNOTATION_TYPE_ROUTE = FACADE_PACKAGE + ".annotation.Route";
     public static final String ANNOTATION_TYPE_AUTOWIRED = FACADE_PACKAGE + ".annotation.Autowired";
+    public static final String ANNOTATION_TYPE_MULTIIMPLEMENT = FACADE_PACKAGE + ".annotation.MultiImplement";
+    public static final String ANNOTATION_TYPE_TAEGETPATH = FACADE_PACKAGE + ".annotation.TargetPath";
+
+
 }

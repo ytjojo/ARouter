@@ -15,6 +15,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -28,9 +29,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedOptions;
-import javax.annotation.processing.SupportedSourceVersion;
-import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -116,6 +115,18 @@ public class AutowiredProcessor extends BaseProcessor {
                 injectMethodBuilder.addStatement("serializationService = $T.getInstance().navigation($T.class)", ARouterClass, ClassName.get(type_JsonService));
                 injectMethodBuilder.addStatement("$T substitute = ($T)target", ClassName.get(parent), ClassName.get(parent));
 
+
+                if (types.isSubtype(parent.asType(), activityTm)) {  // Activity, then use getIntent()
+
+                    injectMethodBuilder.addStatement("$T extras = substitute.getIntent().getExtras()", className(BUNDLE));
+                } else if (types.isSubtype(parent.asType(), fragmentTm) || types.isSubtype(parent.asType(), fragmentTmV4)) {   // Fragment, then use getArguments()
+                    injectMethodBuilder.addStatement("$T extras = substitute.getArguments()", className(BUNDLE));
+                } else {
+                    throw new IllegalAccessException("The field  need autowired from intent, its parent must be activity or fragment!");
+                }
+
+
+                ArrayList<Element> fieldElements = new ArrayList<>();
                 // Generate method body, start inject.
                 for (Element element : childs) {
                     Autowired fieldConfig = element.getAnnotation(Autowired.class);
@@ -139,7 +150,7 @@ public class AutowiredProcessor extends BaseProcessor {
                             );
                         }
 
-                        // Validater
+                        // Validator
                         if (fieldConfig.required()) {
                             injectMethodBuilder.beginControlFlow("if (substitute." + fieldName + " == null)");
                             injectMethodBuilder.addStatement(
@@ -147,41 +158,59 @@ public class AutowiredProcessor extends BaseProcessor {
                             injectMethodBuilder.endControlFlow();
                         }
                     } else {    // It's normal intent value
-                        String originalValue = "substitute." + fieldName;
-                        String statement = "substitute." + fieldName + " = " + buildCastCode(element) + "substitute.";
-                        boolean isActivity = false;
-                        if (types.isSubtype(parent.asType(), activityTm)) {  // Activity, then use getIntent()
-                            isActivity = true;
-                            statement += "getIntent().";
-                        } else if (types.isSubtype(parent.asType(), fragmentTm) || types.isSubtype(parent.asType(), fragmentTmV4)) {   // Fragment, then use getArguments()
-                            statement += "getArguments().";
-                        } else {
-                            throw new IllegalAccessException("The field [" + fieldName + "] need autowired from intent, its parent must be activity or fragment!");
-                        }
+                        fieldElements.add(element);
+                    }
+                }
+                injectMethodBuilder.beginControlFlow("if (null == extras)");
+                injectMethodBuilder.addStatement("return");
+                injectMethodBuilder.endControlFlow();
+                ClassName extraUtils = className("com.alibaba.android.arouter.utils.ExtraUtils");
 
-                        statement = buildStatement(originalValue, statement, typeUtils.typeExchange(element), isActivity);
-                        if (statement.startsWith("serializationService.")) {   // Not mortals
-                            injectMethodBuilder.beginControlFlow("if (null != serializationService)");
-                            injectMethodBuilder.addStatement(
-                                    "substitute." + fieldName + " = " + statement,
-                                    (StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name()),
-                                    ClassName.get(element.asType())
-                            );
-                            injectMethodBuilder.nextControlFlow("else");
-                            injectMethodBuilder.addStatement(
-                                    "$T.e(\"" + Consts.TAG + "\", \"You want automatic inject the field '" + fieldName + "' in class '$T' , then you should implement 'SerializationService' to support object auto inject!\")", AndroidLog, ClassName.get(parent));
-                            injectMethodBuilder.endControlFlow();
-                        } else {
-                            injectMethodBuilder.addStatement(statement, StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name());
+                for (Element element : fieldElements) {
+                    Autowired fieldConfig = element.getAnnotation(Autowired.class);
+                    String fieldName =  element.getSimpleName().toString();
+                    String extraKey = !StringUtils.isEmpty(fieldConfig.name()) ?
+                            fieldConfig.name() : element.getSimpleName().toString();
+                    String originalValue = "substitute." + fieldName;
+                    String statement = "substitute." + fieldName + " = " + buildCastCode(element) + "extras.";
+                    int exchangeType = typeUtils.typeExchange(element.asType());
+                    if(fieldName.equals("map")){
+                        logger.info(exchangeType + "exchangeType" + TypeKind.values()[exchangeType]);
+                    }
+                    statement = buildStatement(originalValue, statement, exchangeType, isKtClass(parent));
+                    if (statement.startsWith("serializationService.")) {   // Not mortals
+                        injectMethodBuilder.beginControlFlow("if (null != serializationService && $T.containsKey(extras, $S))", extraUtils, fieldName);
+                        injectMethodBuilder.addStatement(
+                                "substitute." + fieldName + " = " + statement,
+                                (StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name()),
+                                ClassName.get(element.asType())
+                        );
+                        injectMethodBuilder.nextControlFlow("else");
+                        injectMethodBuilder.addStatement(
+                                "$T.e(\"" + Consts.TAG + "\", \"You want automatic inject the field '" + fieldName + "' in class '$T' , then you should implement 'SerializationService' to support object auto inject!\")", AndroidLog, ClassName.get(parent));
+                        injectMethodBuilder.endControlFlow();
+                    } else {
+                        boolean shouldCheckKey = exchangeType > TypeKind.CHARSEQUENCE.ordinal();
+                        if (shouldCheckKey) {
+                            injectMethodBuilder.beginControlFlow("if ($T.containsKey(extras, $S))", extraUtils, fieldName);
                         }
+                        injectMethodBuilder.addStatement(statement, StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name());
+                        if (shouldCheckKey) {
+                            injectMethodBuilder.endControlFlow();
+                        }
+                    }
+                    if (!ArrayUtils.isEmpty(fieldConfig.alternate())) {
+                        for (String alterate : fieldConfig.alternate()) {
+                            buildStatment(injectMethodBuilder, parent, extraUtils, element, alterate, statement, exchangeType,extraKey);
+                        }
+                    }
 
-                        // Validator
-                        if (fieldConfig.required() && !element.asType().getKind().isPrimitive()) {  // Primitive wont be check.
-                            injectMethodBuilder.beginControlFlow("if (null == substitute." + fieldName + ")");
-                            injectMethodBuilder.addStatement(
-                                    "$T.e(\"" + Consts.TAG + "\", \"The field '" + fieldName + "' is null, in class '\" + $T.class.getName() + \"!\")", AndroidLog, ClassName.get(parent));
-                            injectMethodBuilder.endControlFlow();
-                        }
+                    // Validator
+                    if (fieldConfig.required() && !element.asType().getKind().isPrimitive()) {  // Primitive wont be check.
+                        injectMethodBuilder.beginControlFlow("if (null == substitute." + fieldName + ")");
+                        injectMethodBuilder.addStatement(
+                                "$T.e(\"" + Consts.TAG + "\", \"The field '" + fieldName + "' is null, in class '\" + $T.class.getName() + \"!\")", AndroidLog, ClassName.get(parent));
+                        injectMethodBuilder.endControlFlow();
                     }
                 }
 
@@ -197,53 +226,69 @@ public class AutowiredProcessor extends BaseProcessor {
         }
     }
 
+    private void buildStatment(MethodSpec.Builder injectMethodBuilder,
+                               TypeElement parent,
+                               ClassName extraUtils,
+                               Element element,
+                               String alterate,
+                               String statement,
+                               int exchangeType,String defaultName) {
+        String fieldName = element.getSimpleName().toString();
+        if (statement.startsWith("serializationService.")) {   // Not mortals
+            injectMethodBuilder.beginControlFlow("if (null != serializationService && $T.containsKey(extras, $S))", extraUtils, alterate);
+            injectMethodBuilder.addStatement(
+                    "substitute." + fieldName + " = " + statement,
+                    (!StringUtils.isEmpty(alterate) ? alterate : defaultName),
+                    ClassName.get(element.asType())
+            );
+            injectMethodBuilder.nextControlFlow("else");
+            injectMethodBuilder.addStatement(
+                    "$T.e(\"" + Consts.TAG + "\", \"You want automatic inject the field '" + alterate + "' in class '$T' , then you should implement 'SerializationService' to support object auto inject!\")", AndroidLog, ClassName.get(parent));
+            injectMethodBuilder.endControlFlow();
+        } else {
+            boolean shouldCheckKey = exchangeType > TypeKind.CHARSEQUENCE.ordinal();
+            if (shouldCheckKey) {
+                injectMethodBuilder.beginControlFlow("if ($T.containsKey(extras, $S))", extraUtils, alterate);
+            }
+            injectMethodBuilder.addStatement(statement, !StringUtils.isEmpty(alterate) ? alterate : defaultName);
+            if (shouldCheckKey) {
+                injectMethodBuilder.endControlFlow();
+            }
+        }
+    }
+
+
+    private boolean isKtClass(Element element) {
+        for (AnnotationMirror annotationMirror : elementUtils.getAllAnnotationMirrors(element)) {
+            if (annotationMirror.getAnnotationType().toString().contains("kotlin")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private String buildCastCode(Element element) {
-        if (typeUtils.typeExchange(element) == TypeKind.SERIALIZABLE.ordinal()) {
+        if (typeUtils.typeExchange(element.asType()) == TypeKind.SERIALIZABLE.ordinal()) {
             return CodeBlock.builder().add("($T) ", ClassName.get(element.asType())).build().toString();
         }
         return "";
     }
 
-    private String buildStatement(String originalValue, String statement, int type, boolean isActivity) {
-        switch (TypeKind.values()[type]) {
-            case BOOLEAN:
-                statement += (isActivity ? ("getBooleanExtra($S, " + originalValue + ")") : ("getBoolean($S)"));
-                break;
-            case BYTE:
-                statement += (isActivity ? ("getByteExtra($S, " + originalValue + ")") : ("getByte($S)"));
-                break;
-            case SHORT:
-                statement += (isActivity ? ("getShortExtra($S, " + originalValue + ")") : ("getShort($S)"));
-                break;
-            case INT:
-                statement += (isActivity ? ("getIntExtra($S, " + originalValue + ")") : ("getInt($S)"));
-                break;
-            case LONG:
-                statement += (isActivity ? ("getLongExtra($S, " + originalValue + ")") : ("getLong($S)"));
-                break;
-            case CHAR:
-                statement += (isActivity ? ("getCharExtra($S, " + originalValue + ")") : ("getChar($S)"));
-                break;
-            case FLOAT:
-                statement += (isActivity ? ("getFloatExtra($S, " + originalValue + ")") : ("getFloat($S)"));
-                break;
-            case DOUBLE:
-                statement += (isActivity ? ("getDoubleExtra($S, " + originalValue + ")") : ("getDouble($S)"));
-                break;
-            case STRING:
-                statement += (isActivity ? ("getExtras() == null ? " + originalValue + " : substitute.getIntent().getExtras().getString($S, " + originalValue + ")") : ("getString($S)"));
-                break;
-            case SERIALIZABLE:
-                statement += (isActivity ? ("getSerializableExtra($S)") : ("getSerializable($S)"));
-                break;
-            case PARCELABLE:
-                statement += (isActivity ? ("getParcelableExtra($S)") : ("getParcelable($S)"));
-                break;
-            case OBJECT:
-                statement = "serializationService.parseObject(substitute." + (isActivity ? "getIntent()." : "getArguments().") + (isActivity ? "getStringExtra($S)" : "getString($S)") + ", new " + TYPE_WRAPPER + "<$T>(){}.getType())";
-                break;
+    /**
+     * Build param inject statement
+     */
+    private String buildStatement(String originalValue, String statement, int type, boolean isKt) {
+        TypeKind typeKind = TypeKind.values()[type];
+        if (typeKind == TypeKind.OBJECT) {
+            statement = "serializationService.parseObject(extras.getString($S)" + ", new " + TYPE_WRAPPER + "<$T>(){}.getType())";
+        } else {
+            if (type <= TypeKind.CHARSEQUENCE.ordinal()) {
+                statement += "get" + typeKind.getStatement() + "($S, " + originalValue + ")";
+            } else {
+                statement += "get" + typeKind.getStatement() + "($S )";
+            }
         }
-
         return statement;
     }
 

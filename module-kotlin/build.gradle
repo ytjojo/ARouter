@@ -11,9 +11,10 @@ kapt {
 
 dependencies {
     implementation project(':arouter-api')
-    implementation project(':arouter-annotation')
+//    implementation project(':arouter-annotation')
+    api "${publishedGroupId}:arouter-annotation:1.0.0"
     kapt project(':arouter-compiler')
-    implementation "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"
+    implementation "androidx.appcompat:appcompat:${ANDROIDX_VERSION}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }

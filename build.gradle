@@ -1,17 +1,38 @@
 buildscript {
     ext.kotlin_version = '1.3.72'
-    ext.arouter_register_version = '1.0.2'
+    ext.arouter_register_version = '1.0.0'
 
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    ext.mavenHost = properties.getProperty("mavenHost")
     repositories {
+        maven {
+            url uri('repo')
+        }
+
+        mavenCentral()
+        jcenter()
+        mavenCentral()
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots"
+        }
+        gradlePluginPortal()
         maven {
             url "https://oss.sonatype.org/content/repositories/snapshots/"
         }
-        maven {
-            url 'http://dl.bintray.com/jetbrains/intellij-plugin-service'
-        }
-        mavenCentral()
-        jcenter()
+//        maven {
+//            url 'http://dl.bintray.com/jetbrains/intellij-plugin-service'
+//        }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/google' }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/jcenter' }
+        // 阿里云镜像
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url "https://jitpack.io" }
+        maven { url "${mavenHost}" }
         google()
+
+
     }
 
     dependencies {
@@ -20,7 +41,8 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.2'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.alibaba:arouter-register:$arouter_register_version"
+        classpath "com.wogoo.android:arouter-gradle-plugin:$arouter_register_version"
+//        classpath "com.alibaba:arouter-register:$arouter_register_version"
     }
 }
 
@@ -28,5 +50,17 @@ allprojects {
     repositories {
         jcenter()
         google()
+        mavenCentral()
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots"
+        }
+        gradlePluginPortal()
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/google' }
+        maven { url 'http://maven.aliyun.com/nexus/content/repositories/jcenter' }
+        // 阿里云镜像
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url "https://jitpack.io" }
+        maven { url "${mavenHost}" }
     }
 }

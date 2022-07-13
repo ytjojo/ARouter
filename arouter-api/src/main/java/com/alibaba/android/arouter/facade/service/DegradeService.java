@@ -19,5 +19,5 @@ public interface DegradeService extends IProvider {
      *
      * @param postcard meta
      */
-    void onLost(Context context, Postcard postcard);
+    boolean onLost(Context context, Postcard postcard);
 }

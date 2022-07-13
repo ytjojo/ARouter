@@ -27,4 +27,9 @@ public abstract class NavCallback implements NavigationCallback {
     public void onInterrupt(Postcard postcard) {
         // Do nothing
     }
+
+    @Override
+    public void onPause(Postcard postcard) {
+
+    }
 }

@@ -16,7 +16,7 @@
 
 #### Demo展示
 
-##### [Demo apk下载](https://github.com/alibaba/ARouter/blob/develop/demo/arouter-demo.apk)、[Demo Gif](https://raw.githubusercontent.com/alibaba/ARouter/master/demo/arouter-demo.gif)
+##### [Demo apk下载](https://github.com/alibaba/ARouter/blob/develop/demo/arouter-demo-1.5.2.apk)、[Demo Gif](https://raw.githubusercontent.com/alibaba/ARouter/master/demo/arouter-demo.gif)
 
 #### 一、功能介绍
 1. **支持直接解析标准URL进行跳转，并自动注入参数到目标页面中**
@@ -35,6 +35,7 @@
 14. **支持生成路由文档**
 15. **提供 IDE 插件便捷的关联路径和目标类**
 16. 支持增量编译(开启文档生成后无法增量编译)
+17. 支持动态注册路由信息
 
 #### 二、典型应用
 1. 从外部URL映射到内部页面，以及参数传递与解析
@@ -182,7 +183,9 @@
         int age;
         
         // 通过name来映射URL中的不同参数
-        @Autowired(name = "girl") 
+        //  alternate = {"sex"} 配置可代替参数 传递sex 也会赋值给boy字段
+        // 可以配置多个代替参数
+        @Autowired(name = "girl" ,alternate = {"sex"}) 
         boolean boy;
         
         // 支持解析自定义对象，URL中使用json传递
@@ -363,6 +366,27 @@
     
         }
     }
+    ```
+
+10. 动态注册路由信息
+适用于部分插件化架构的App以及需要动态注册路由信息的场景，可以通过 ARouter 提供的接口实现动态注册
+路由信息，目标页面和服务可以不标注 @Route 注解，**注意：同一批次仅允许相同 group 的路由信息注册**
+    ``` java
+        ARouter.getInstance().addRouteGroup(new IRouteGroup() {
+            @Override
+            public void loadInto(Map<String, RouteMeta> atlas) {
+                atlas.put("/dynamic/activity",      // path
+                    RouteMeta.build(
+                        RouteType.ACTIVITY,         // 路由信息
+                        TestDynamicActivity.class,  // 目标的 Class
+                        "/dynamic/activity",        // Path
+                        "dynamic",                  // Group, 尽量保持和 path 的第一段相同
+                        0,                          // 优先级，暂未使用
+                        0                           // Extra，用于给页面打标
+                    )
+                );
+            }
+        });
     ```
  
 #### 五、更多功能
@@ -609,3 +633,289 @@
     3. QQ 交流群2
         
         ![qq](https://raw.githubusercontent.com/alibaba/ARouter/master/demo/qq-group-2.png)
+        
+#### 九、新增功能
+
+新增功能原则：
+注解能解决问题的就不要用拦截器处理
+能在局部处理就不要扩散到全局
+
+1. 新增alternate字段，自动装载注解支持多个代替参数，
+    参考Gson的@SerializedName注解alternate字段
+
+    ```
+    // 通过name来映射URL中的不同参数
+    //  alternate = {"sex"} 配置可代替参数 传递sex 也会赋值给boy字段
+    // 可以配置多个代替参数
+    @Autowired(name = "girl" ,alternate = {"sex"}) 
+    boolean boy;
+    ```
+2. 路由支持secondarypath，可以配置多个，支持优先级配置，值越大优先级越高
+
+随着业务迭代，因各种原因当初制定path已不符合当前规则，需要修改路由path，但是要兼容旧的深度链接方式唤起，
+secondarypath就派上用场了，不需要在公共代码进行路由转换。
+
+secondarypath可以配置以下四种
++ 仅有scheme 实际场景仅适用打开web链接 必须是Uri方式创建路由
++ 仅有path 比较常见 Uri和path创建路由都可以唤起
++ host+path 必须是Uri方式创建路由
++ scheme+host+path 比较严苛 必须是Uri方式创建路由
+
+```
+@Route(path = "/test/activity2",secondaryPathes = {"/test/activity2key"})
+public class Test2Activity extends AppCompatActivity {
+```
+
+ `ARouter.getInstance().build("/test/activity2key").navigation();`
+ 也能打开Test2Activity
+ 
+3. secondarypath支持正则表达式匹配，并从path获取字段值，从path中获取字段，需要用<>来包括字段key
+
+
+```
+@Route(path = "/test/activity4", priority = 100, secondaryPathes = {"/test/home/pro<name>/<extra>/<id>"})
+public class Test4Activity extends AppCompatActivity {
+```
+可以从intent中获取name extra id三个字段。
+
+4. secondarypath支持正则表达式将所有http和https开头的链接交给WebviewActvity,支持正则表达式优先级，值越大优先级越高
+
+```
+@Route(path = "/test/globlewebview", priority = 1, secondaryPathes = {"https://", "http://"})
+public class WebViewActivity extends AppCompatActivity {
+```
+
+`ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322/")).navigation(this);`
+此链接会匹配WebviewActivity和Test4Activity，，只会打开Test4Activity，因为Test4Activity优先级高
+
+5. 路由支持配置多个私有拦截器，多个按顺序执行
+拦截器中可以暂停路由，在异步获取结果后再决定是否跳转
+在私有拦截器可以替换参数，
+判断条件等处理
+
+```
+@Route(path = "/test/activity1", interceptors = {TestPrivateInterceptor.class}, name = "测试用 Activity", secondaryPathes = {"/test/activity1secondary", "/test/activity1secondary2"})
+public class Test1Activity extends BaseActivity {
+
+```
+6. 路由的暂停、恢复、移除暂停
+
+常用于异步场景：
+
++ 登陆成功后跳转
++ 需要手势密码验证
++ 动态从服务器获取状态来确定是否进行跳转
+
+暂停路由可以在ARouter.build()后直接调用
+在公共拦截器中调用
+可以私有拦截器中调用
+
+
+在私有拦截器中需要异步处理的话，需要同步调用暂停，根据异步结果再确定调用暂停后恢复，或暂停后移除
+
+//暂停
+postcard.pause("test1");
+//终止
+postcard.interrupt(throwable);
+//暂停后恢复
+postcard.resumePausePostCard(throwable);
+//暂停后移除
+//例如如果从服务器获取结果是不允许跳转，就直接移除暂停的路由。整个路由生命周期结束
+ARouter.getInstance().removePaused("test1");
+
+6. 路由支持静态公共方法,和公共构造方法，可以有返回值
+
+参数除Postcard可以提供的之外，还支持Postcard ，Context ，NavigationCallback，Uri，通过注解标记的IntentFlag，Action,RequestCode;
+
+如果静态方法有返回值的时候一定要greenChannel()，不然拦截处理走异步，会提前返回null
+
+```
+
+   @Route(path = "/test/methodInvoker1", interceptors = {Test1Interceptor.class})
+    public static void startWithAcitonFlag(Activity context, @Query("name") String userName, @Action("") String action, @Flags int flag, @RequestCode int requestCode) {
+        Intent intent = new Intent(context, MethodInvokerActivity.class);
+        intent.putExtra("name", userName);
+        intent.setAction(action);
+        if (flag != 0) {
+            intent.setFlags(flag);
+        }
+        context.startActivityForResult(intent, requestCode);
+    }
+```
+7. 支持接口方式启动路由，这样参数就很明确，可以下沉到基础库
+
+```
+public interface ITestNavigator {
+
+
+    @Action("testactivity")
+    @RequestCode(300)
+    @TargetPath("/test/activity1")
+    Postcard navigateTest(Activity activity, @RequestCode int requestCode, @Query("map") Map<String, List<TestObj>> map, Uri uri);
+
+    @TargetPath("/test/activity2key")
+    Intent navigateTest2(Activity activity,@Query("key1") String mykey);
+
+    @Action("testactivity")
+    @RequestCode(300)
+    @TargetPath("/test/activity1")
+    void navigateTest(Activity activity, @RequestCode int requestCode, @Query("age") int age,@Query("name") String userName, int height, boolean boy, NavCallback navCallback);
+
+
+
+
+    @Action("testactivity")
+    @TargetPath("/test/activity1")
+    void navigateTest(Activity activity, String name, Integer height, long high,@Query("boy") Boolean girl, Byte byteFlag, short shortFlag, @Query("age") int age, char ch, float fl, double dou, TestSerializable ser, TestParcelable pac, CharSequence charSequence, byte[] bytes, CharSequence[] charSequenceArray, char[] charArray, short[] sh, float[] floats, SparseArray<TestParcelable> sparseArrays, ArrayList<Integer> integerArrayList, ArrayList<CharSequence> charSequenceArrayList, ArrayList<String> shortArray, ArrayList<TestParcelable> parcelables, Map<String, List<TestObj>> map);
+
+    public interface ItestStaticMethod{
+        @TargetPath("/test/getmap")
+        Map<String, List<TestObj>> getMap();
+    }
+}
+
+```
+
+会生成ARouter代码
+
+```
+
+/**
+ * DO NOT EDIT THIS FILE!!! IT WAS GENERATED BY AROUTER. */
+public class ARouter$$ITestNavigatorImpl implements ITestNavigator {
+  @Override
+  public Postcard navigateTest(Activity activity, int requestCode, Map<String, List<TestObj>> map,
+      Uri uri) {
+    Postcard postcard = ARouter.getInstance().build("/test/activity1");
+    postcard.withObject("map", map);
+    postcard.withIntentData(uri);
+    postcard.withAction("testactivity");
+    return postcard;
+  }
+
+  @Override
+  public Intent navigateTest2(Activity activity, String mykey) {
+    Postcard postcard = ARouter.getInstance().build("/test/activity2key");
+    postcard.withString("key1", mykey);
+    postcard.setForIntent();
+    return (android.content.Intent)postcard.navigation(activity, null);
+  }
+
+  @Override
+  public void navigateTest(Activity activity, int requestCode, int age, String userName, int height,
+      boolean boy, NavCallback navCallback) {
+    Postcard postcard = ARouter.getInstance().build("/test/activity1");
+    postcard.withInt("age", age);
+    postcard.withString("name", userName);
+    postcard.withInt("height", height);
+    postcard.withBoolean("boy", boy);
+    postcard.withAction("testactivity");
+    postcard.navigation(activity, requestCode, navCallback);
+  }
+
+  @Override
+  public void navigateTest(Activity activity, String name, Integer height, long high, Boolean girl,
+      Byte byteFlag, short shortFlag, int age, char ch, float fl, double dou, TestSerializable ser,
+      TestParcelable pac, CharSequence charSequence, byte[] bytes, CharSequence[] charSequenceArray,
+      char[] charArray, short[] sh, float[] floats, SparseArray<TestParcelable> sparseArrays,
+      ArrayList<Integer> integerArrayList, ArrayList<CharSequence> charSequenceArrayList,
+      ArrayList<String> shortArray, ArrayList<TestParcelable> parcelables,
+      Map<String, List<TestObj>> map) {
+    Postcard postcard = ARouter.getInstance().build("/test/activity1");
+    postcard.withString("name", name);
+    postcard.withInt("height", height);
+    postcard.withLong("high", high);
+    postcard.withBoolean("boy", girl);
+    postcard.withByte("byteFlag", byteFlag);
+    postcard.withShort("shortFlag", shortFlag);
+    postcard.withInt("age", age);
+    postcard.withChar("ch", ch);
+    postcard.withFloat("fl", fl);
+    postcard.withDouble("dou", dou);
+    postcard.withSerializable("ser", ser);
+    postcard.withParcelable("pac", pac);
+    postcard.withCharSequence("charSequence", charSequence);
+    postcard.withByteArray("bytes", bytes);
+    postcard.withCharSequenceArray("charSequenceArray", charSequenceArray);
+    postcard.withCharArray("charArray", charArray);
+    postcard.withShortArray("sh", sh);
+    postcard.withFloatArray("floats", floats);
+    postcard.withSparseParcelableArray("sparseArrays", sparseArrays);
+    postcard.withIntegerArrayList("integerArrayList", integerArrayList);
+    postcard.withCharSequenceArrayList("charSequenceArrayList", charSequenceArrayList);
+    postcard.withStringArrayList("shortArray", shortArray);
+    postcard.withParcelableArrayList("parcelables", parcelables);
+    postcard.withObject("map", map);
+    postcard.withAction("testactivity");
+    postcard.navigation(activity, null);
+  }
+}
+```
+
+调用方式
+
+
+```
+ Intent intent = ARouter.getInstance().navigationWithTemplate(ITestNavigator.class).navigateTest2(this,"hello world");
+                startActivity(intent);
+
+```
+
+8. 支持根据接口获取所有实现类
+
+用途，模块化后，各个模块生命周期，各个模块处理路由降级处理
+
+支持优先级 值越大优先级越高
+
+```
+
+@MultiImplement(priority = 1, value = IModuleLifecycle.class)
+public class AppModuleLifecycle implements IModuleLifecycle {
+  public int getPrioriry() {
+    return 1;
+  }
+
+  @Override
+  public void onCreate() {
+    
+  }
+}
+```
+
+如何调用
+
+```
+ //列表顺序是按优先级由高到低排列的
+ List<IModuleLifecycle> list = ARouter.getInstance().getMultiImplements(IModuleLifecycle.class);
+ for (IModuleLifecycle iModuleLifecycle : list) {
+      iModuleLifecycle.onCreate();
+ }
+
+```
+9. 关于Intent 字段兼容
+如果是Uri构建路由方式（一般是深度链接打开app），转交给ARouter，目标页字段有@Autowired注解，ARouter会自动转换类型
+例如
+
+```
+
+ @Autowired
+    String name;
+
+    @Autowired
+    int age;
+
+    @Autowired(name = "boy")
+    boolean girl;
+
+```
+启动代码
+`ARouter.getInstance().build(Uri.parse("arouter://m.aliyun.com/test/activity3?name=alex&age=18&boy=true&high=180")).navigation(this);`
+
+name age girl字段都能正确获取数据值，
+
+特殊类型ARouter无法转换，就需要自定义IPrivateInterceptor，在拦截器中转换处理，同时将拦截器class 加入到@Router的interceptors字段中
+
+
+
+
+
