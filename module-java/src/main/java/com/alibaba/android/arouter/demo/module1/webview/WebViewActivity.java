@@ -2,8 +2,6 @@ package com.alibaba.android.arouter.demo.module1.webview;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -11,11 +9,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
-
-import static android.webkit.WebSettings.LOAD_DEFAULT;
 
 @Route(path = "/test/globlewebview", priority = -1, secondaryPathes = {"https://", "http://"})
 public class WebViewActivity extends AppCompatActivity {

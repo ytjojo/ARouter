@@ -5,9 +5,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.normalNavigation:
                 ARouter.getInstance()
                         .build("/test/activity2")
-                        .navigation();
+                        .navigation(this);
 
                 // 也可以通过依赖对方提供的二方包来约束入参
                 // 非必须，可以通过这种方式调用
@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .build("/kotlin/test")
                         .withString("name", "老王")
                         .withInt("age", 23)
-                        .navigation();
+                        .navigation(this);
                 break;
             case R.id.normalNavigationWithParams:
                 // ARouter.getInstance()
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Uri testUriMix = Uri.parse("arouter://m.aliyun.com/test/activity2");
                 ARouter.getInstance().build(testUriMix)
                         .withString("key1", "value1")
-                        .navigation();
+                        .navigation(this);
 
                 break;
             case R.id.oldVersionAnim:
@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ARouter.getInstance()
                             .build("/test/activity2")
                             .withOptionsCompat(compat)
-                            .navigation();
+                            .navigation(this);
                 } else {
                     Toast.makeText(this, "API < 16,不支持新版本动画", Toast.LENGTH_SHORT).show();
                 }
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ARouter.getInstance()
                         .build("/test/webview")
                         .withString("url", "file:///android_asset/scheme-test.html")
-                        .navigation();
+                        .navigation(this);
                 break;
             case R.id.autoInject:
                 ARouter.getInstance().build("/test/activity1")

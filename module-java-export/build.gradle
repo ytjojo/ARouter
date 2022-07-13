@@ -1,9 +1,10 @@
 apply plugin: 'com.android.library'
 
 dependencies {
-    implementation project(':arouter-annotation')
+//    implementation project(':arouter-annotation')
+    api "${publishedGroupId}:arouter-annotation:1.0.0"
     implementation project(':arouter-api')
-    implementation "com.android.support:appcompat-v7:${SUPPORT_LIB_VERSION}"
+    implementation "androidx.appcompat:appcompat:${ANDROIDX_VERSION}"
     annotationProcessor project(':arouter-compiler')
 
     implementation 'com.alibaba:fastjson:1.2.48'

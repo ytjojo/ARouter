@@ -14,9 +14,9 @@ compileJava {
 }
 
 dependencies {
-//    implementation 'com.alibaba:arouter-annotation:1.0.6'
+    implementation "${publishedGroupId}:arouter-annotation:1.0.0"
 //    compileOnly files(Jvm.current().getToolsJar())
-    implementation project(':arouter-annotation')
+//    implementation project(':arouter-annotation')
 
     annotationProcessor 'com.google.auto.service:auto-service:1.0-rc7'
     compileOnly 'com.google.auto.service:auto-service-annotations:1.0-rc7'
@@ -30,5 +30,16 @@ dependencies {
     implementation "com.google.auto:auto-common:0.10"
 }
 
-apply from: '../install.gradle'
-apply from: '../bintray.gradle'
+//addDependency("arouter-annotation","1.0.0")
+//
+//def void addDependency(String name, String version) {
+//    project.dependencies {
+//        if (rootProject.childProjects.find { it.value.name.equals(name) } != null) {
+//            implementation project(":${name}")
+//        } else {
+//            implementation "${AndroidGroup}:${name}:${version}"
+//        }
+//    }
+//}
+
+apply from: '../mevenUpload.gradle'

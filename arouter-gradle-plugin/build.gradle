@@ -15,18 +15,18 @@ dependencies {
 }
 
 dependencies {
-    compile 'com.android.tools.build:gradle:3.4.0'
+    compileOnly 'com.android.tools.build:gradle:4.0.0'
 }
 
-//apply from: '../install.gradle'
-//apply from: '../bintray.gradle'
+apply from: '../mevenUpload.gradle'
 
-uploadArchives {
-    repositories.mavenDeployer {
-        repository(url: uri('../repo')) {
-        }
-        pom.version="1.0.3"
-        pom.artifactId=artifact
-        pom.groupId=publishedGroupId
-    }
-}
+//
+//uploadArchives {
+//    repositories.mavenDeployer {
+//        repository(url: uri('../repo')) {
+//        }
+//        pom.version="1.0.3"
+//        pom.artifactId=artifact
+//        pom.groupId=publishedGroupId
+//    }
+//}

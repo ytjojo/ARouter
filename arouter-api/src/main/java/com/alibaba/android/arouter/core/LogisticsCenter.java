@@ -612,7 +612,7 @@ public class LogisticsCenter {
     private static void registerMultiImplements(IMultiImplementGroup multiImplementsGroup) {
         markRegisteredByPlugin();
         if (multiImplementsGroup != null) {
-            multiImplementsGroup.loadInto(ARouter.getInstance().navigation(IMultiImplementRegister.class));
+            multiImplementsGroup.loadInto(MultiImplmentsRegister.getInstance());
         }
     }
 

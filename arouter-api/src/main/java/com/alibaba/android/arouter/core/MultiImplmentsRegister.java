@@ -22,4 +22,11 @@ public class MultiImplmentsRegister implements IMultiImplementRegister {
     public void init(Context context) {
 
     }
+
+    public static MultiImplmentsRegister getInstance() {
+        return HOLDER.instance;
+    }
+    private static class HOLDER {
+        static MultiImplmentsRegister instance = new MultiImplmentsRegister();
+    }
 }
