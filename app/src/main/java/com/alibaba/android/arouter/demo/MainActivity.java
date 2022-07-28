@@ -306,6 +306,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Intent intent = ARouter.getInstance().navigationWithTemplate(ITestNavigator.class).navigateTest2(this,"hello world");
                 startActivity(intent);
                 break;
+            case R.id.simplepath:
+                ARouter.getInstance().build(Uri.parse("http://test.com/simplepath?key1=section")).navigation(this);
+                break;
             default:
                 break;
         }

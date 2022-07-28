@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * A container that contains the roadmap.
@@ -645,7 +646,7 @@ public final class Postcard extends RouteMeta {
         } else {
             if (other instanceof Postcard) {
                 Postcard postcard = (Postcard) other;
-                return getPath().equals(postcard.getPath()) && getGroup().equals(postcard.getGroup());
+                return getPath().equals(postcard.getPath()) && Objects.equals(getGroup(),postcard.getGroup());
             }
         }
         return false;

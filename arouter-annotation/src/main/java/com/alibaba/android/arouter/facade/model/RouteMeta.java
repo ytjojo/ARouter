@@ -21,7 +21,7 @@ public class RouteMeta {
     private Class<?> destination;   // Destination
     private String path;            // Path of route
     private String group;           // Group of route
-    private int priority = -1;      // The smaller the number, the higher the priority
+    private int priority = -1;      // The bigger the number, the higher the priority
     private int extra;              // Extra data
     private Map<String, Integer> paramsType;  // Param type
     private String name;
@@ -131,7 +131,10 @@ public class RouteMeta {
 
     public String getGroup() {
         if (group == null || group.isEmpty()) {
-            group = path.substring(1, path.indexOf("/", 1));
+            if (path.lastIndexOf("/") > 0) {
+                group = path.substring(1, path.indexOf("/", 1));
+            }
+
         }
         return this.group;
     }
@@ -222,15 +225,16 @@ public class RouteMeta {
     public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, Map<String, Integer> paramsType, String[] secondaryPathes, Class[] interceptors, int priority, int extra) {
         return new RouteMeta(type, null, destination, null, path, group, paramsType, secondaryPathes, interceptors, priority, extra);
     }
+
     public static RouteMeta build(RouteType type, Class<?> destination, String path, String group, int priority, int extra) {
         return new RouteMeta(type, null, destination, null, path, group, null, null, null, priority, extra);
     }
 
-    public static RouteMeta buildSimpleActivity( String path,Class<?> clazz) {
+    public static RouteMeta buildSimpleActivity(String path, Class<?> clazz) {
         return RouteMeta.build(RouteType.ACTIVITY, clazz, path, null, null, null, null, -1, -2147483648);
     }
 
-    public static RouteMeta buildSimpleFragment( String path,Class<?> clazz) {
+    public static RouteMeta buildSimpleFragment(String path, Class<?> clazz) {
         return RouteMeta.build(RouteType.FRAGMENT, clazz, path, null, null, null, null, -1, -2147483648);
     }
 

@@ -8,8 +8,9 @@
 
     <application>
         <activity android:name=".KotlinTestActivity"/>
-        <activity android:name=".TestNormalActivity">
-        </activity>
+        <activity android:name=".TestNormalActivity"/>
+        <activity android:name=".SimplePathActivity"/>
+
     </application>
 
 </manifest>

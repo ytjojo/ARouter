@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 
 dependencies {
 //    implementation project(':arouter-annotation')
-    api "${publishedGroupId}:arouter-annotation:1.0.0"
+//    api "${publishedGroupId}:arouter-annotation:1.0.1"
     implementation project(':arouter-api')
     implementation "androidx.appcompat:appcompat:${ANDROIDX_VERSION}"
     annotationProcessor project(':arouter-compiler')
