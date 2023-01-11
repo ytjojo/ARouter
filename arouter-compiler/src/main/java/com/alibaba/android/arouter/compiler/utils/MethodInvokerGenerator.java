@@ -56,6 +56,17 @@ public class MethodInvokerGenerator {
         } else {
             invokeMethodSpec.nextControlFlow("else if($S.equals(path))", routeMeta.getPath());
         }
+        addInvokeMethod(invokeMethodSpec,routeMeta,processor);
+
+        if(routeMeta.getSecondaryPathes() != null && routeMeta.getSecondaryPathes().length > 0){
+            for(String secondeUri : routeMeta.getSecondaryPathes()){
+                addUriStatement(invokeMethodSpec,secondeUri,routeMeta,processor);
+            }
+        }
+        return invokeMethodSpec;
+    }
+
+    private static void addInvokeMethod(MethodSpec.Builder invokeMethodSpec, RouteMeta routeMeta, BaseProcessor processor){
         ExecutableElement executableElement = (ExecutableElement) routeMeta.getRawType();
         List<? extends VariableElement> parameters = executableElement.getParameters();
         ClassName typeClassName = processor.className(((TypeElement) executableElement.getEnclosingElement()).getQualifiedName().toString());
@@ -152,11 +163,17 @@ public class MethodInvokerGenerator {
             }
             sb.append(")");
             invokeMethodSpec.addStatement(sb.toString(), args.toArray());
+
+
             if (addReturnNull) {
                 invokeMethodSpec.addStatement("return null");
             }
         }
-        return invokeMethodSpec;
+    }
+
+    private static void addUriStatement(MethodSpec.Builder invokeMethodSpec,String uri, RouteMeta routeMeta, BaseProcessor processor){
+        invokeMethodSpec.nextControlFlow("else if( postcard.getUri() != null && postcard.getUri().toString().contains($S) )", uri);
+        addInvokeMethod(invokeMethodSpec,routeMeta,processor);
     }
 
     private static void getValueStatment(String key, StringBuilder sb, VariableElement var, BaseProcessor processor, ArrayList args) {

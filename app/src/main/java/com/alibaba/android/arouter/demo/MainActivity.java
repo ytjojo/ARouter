@@ -292,6 +292,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                Dialog dialog = (Dialog) ARouter.getInstance().build("/test/dialog").withString("content","hello,这是我的内容").greenChannel().navigation(this);
                dialog.show();
                 break;
+            case R.id.staticMethodrouterUri:
+                ARouter.getInstance().build(Uri.parse("arouter://app/test/methodForUri?name=张三"))
+                        .navigation(this);
+                break;
             case R.id.startwebview:
                 ARouter.getInstance().build(Uri.parse("https://github.com/ansen666/Webview?abc=111&name=ssss")).withIntentData(Uri.parse("https://github.com/ansen666/Webview")).navigation(this);
                 break;

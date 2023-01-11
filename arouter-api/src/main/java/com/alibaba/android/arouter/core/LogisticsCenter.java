@@ -1,5 +1,17 @@
 package com.alibaba.android.arouter.core;
 
+import static com.alibaba.android.arouter.launcher.ARouter.logger;
+import static com.alibaba.android.arouter.utils.Consts.AROUTER_SP_CACHE_KEY;
+import static com.alibaba.android.arouter.utils.Consts.AROUTER_SP_KEY_MAP;
+import static com.alibaba.android.arouter.utils.Consts.DOT;
+import static com.alibaba.android.arouter.utils.Consts.ROUTE_ROOT_PAKCAGE;
+import static com.alibaba.android.arouter.utils.Consts.SDK_NAME;
+import static com.alibaba.android.arouter.utils.Consts.SEPARATOR;
+import static com.alibaba.android.arouter.utils.Consts.SUFFIX_INTERCEPTORS;
+import static com.alibaba.android.arouter.utils.Consts.SUFFIX_PROVIDERS;
+import static com.alibaba.android.arouter.utils.Consts.SUFFIX_ROOT;
+import static com.alibaba.android.arouter.utils.Consts.TAG;
+
 import android.content.Context;
 import android.net.Uri;
 
@@ -15,7 +27,6 @@ import com.alibaba.android.arouter.facade.template.IDeepLinkMatcher;
 import com.alibaba.android.arouter.facade.template.IInterceptorGroup;
 import com.alibaba.android.arouter.facade.template.IMethodInvoker;
 import com.alibaba.android.arouter.facade.template.IMultiImplementGroup;
-import com.alibaba.android.arouter.facade.template.IMultiImplementRegister;
 import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
 import com.alibaba.android.arouter.facade.template.IProvider;
 import com.alibaba.android.arouter.facade.template.IProviderGroup;
@@ -41,18 +52,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
-
-import static com.alibaba.android.arouter.launcher.ARouter.logger;
-import static com.alibaba.android.arouter.utils.Consts.AROUTER_SP_CACHE_KEY;
-import static com.alibaba.android.arouter.utils.Consts.AROUTER_SP_KEY_MAP;
-import static com.alibaba.android.arouter.utils.Consts.DOT;
-import static com.alibaba.android.arouter.utils.Consts.ROUTE_ROOT_PAKCAGE;
-import static com.alibaba.android.arouter.utils.Consts.SDK_NAME;
-import static com.alibaba.android.arouter.utils.Consts.SEPARATOR;
-import static com.alibaba.android.arouter.utils.Consts.SUFFIX_INTERCEPTORS;
-import static com.alibaba.android.arouter.utils.Consts.SUFFIX_PROVIDERS;
-import static com.alibaba.android.arouter.utils.Consts.SUFFIX_ROOT;
-import static com.alibaba.android.arouter.utils.Consts.TAG;
 
 /**
  * LogisticsCenter contains all of the map.
@@ -259,6 +258,10 @@ public class LogisticsCenter {
 
                     // Save params name which need auto inject.
                     postcard.getExtras().putStringArray(ARouter.AUTO_INJECT, paramsType.keySet().toArray(new String[]{}));
+                } else {
+                    for (Map.Entry<String, String> params : resultMap.entrySet()) {
+                        postcard.withString(params.getKey(), params.getValue());
+                    }
                 }
 
                 // Save raw uri
