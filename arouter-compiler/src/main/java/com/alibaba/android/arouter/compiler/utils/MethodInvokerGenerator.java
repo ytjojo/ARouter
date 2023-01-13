@@ -172,7 +172,7 @@ public class MethodInvokerGenerator {
     }
 
     private static void addUriStatement(MethodSpec.Builder invokeMethodSpec,String uri, RouteMeta routeMeta, BaseProcessor processor){
-        invokeMethodSpec.nextControlFlow("else if( postcard.getUri() != null && postcard.getUri().toString().contains($S) )", uri);
+        invokeMethodSpec.nextControlFlow("else if( postcard.isMatchSecondaryPath($S) )", uri);
         addInvokeMethod(invokeMethodSpec,routeMeta,processor);
     }
 

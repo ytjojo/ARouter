@@ -6,11 +6,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.SparseArray;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityOptionsCompat;
-import android.util.SparseArray;
 
 import com.alibaba.android.arouter.exception.HandlerException;
 import com.alibaba.android.arouter.facade.callback.NavigationCallback;
@@ -156,6 +156,26 @@ public final class Postcard extends RouteMeta {
 
     public Uri getUri() {
         return uri;
+    }
+
+    public Boolean isMatchSecondaryPath(String secondaryPath) {
+        boolean hasScheme = !secondaryPath.startsWith("/");
+        if (uri != null) {
+            if (hasScheme) {
+                Uri secondaryUri = Uri.parse(secondaryPath);
+                return uri.getPath().equals(secondaryUri.getPath());
+            } else {
+                return uri.getPath().equals(secondaryPath);
+            }
+        } else {
+            if (hasScheme) {
+                Uri secondaryUri = Uri.parse(secondaryPath);
+                return getPath().equals(secondaryUri.getPath());
+            } else {
+                return getPath().equals(secondaryPath);
+            }
+
+        }
     }
 
     public Postcard setUri(Uri uri) {
@@ -646,7 +666,7 @@ public final class Postcard extends RouteMeta {
         } else {
             if (other instanceof Postcard) {
                 Postcard postcard = (Postcard) other;
-                return getPath().equals(postcard.getPath()) && Objects.equals(getGroup(),postcard.getGroup());
+                return getPath().equals(postcard.getPath()) && Objects.equals(getGroup(), postcard.getGroup());
             }
         }
         return false;
@@ -697,11 +717,12 @@ public final class Postcard extends RouteMeta {
     public void pause(String tag) {
         ARouter.getInstance().pause(tag, this);
     }
-    public void resumePausePostCard(Context context,String tag){
-        ARouter.getInstance().resumePausedPostcard(context,tag);
+
+    public void resumePausePostCard(Context context, String tag) {
+        ARouter.getInstance().resumePausedPostcard(context, tag);
     }
 
-    public void removePausedd(){
+    public void removePausedd() {
         ARouter.getInstance().removePaused(this);
     }
 
