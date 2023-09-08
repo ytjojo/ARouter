@@ -39,10 +39,12 @@ import com.alibaba.android.arouter.launcher.ARouter;
 import com.alibaba.android.arouter.utils.ClassUtils;
 import com.alibaba.android.arouter.utils.CollectionUtils;
 import com.alibaba.android.arouter.utils.Consts;
+import com.alibaba.android.arouter.utils.GlobleCallbackNotifer;
 import com.alibaba.android.arouter.utils.MapUtils;
 import com.alibaba.android.arouter.utils.PackageUtils;
 import com.alibaba.android.arouter.utils.TextUtils;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -262,6 +264,13 @@ public class LogisticsCenter {
                     for (Map.Entry<String, String> params : resultMap.entrySet()) {
                         postcard.withString(params.getKey(), params.getValue());
                     }
+                }
+
+                if(!resultMap.isEmpty()){
+                    HashMap<String,String> queryMap = new HashMap<>();
+                    queryMap.putAll(resultMap);
+                    postcard.getExtras().putSerializable(ARouter.URI_RAW_STRING_QUERR_PARAMETERS_MAP,(Serializable) queryMap);
+
                 }
 
                 // Save raw uri

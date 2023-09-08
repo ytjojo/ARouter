@@ -27,6 +27,7 @@ public final class ARouter {
     public static final String RAW_URI = "NTeRQWvye18AkPd6G";
     public static final String AUTO_INJECT = "wmHzgD4lOj5o4241";
     public static final String AUTO_INJECT_PLACEHOLDERS = "SU5KRUNURURLRVk=";
+    public static final String URI_RAW_STRING_QUERR_PARAMETERS_MAP = "C4791EB06425A5D0";
 
     private volatile static ARouter instance = null;
     private volatile static boolean hasInit = false;

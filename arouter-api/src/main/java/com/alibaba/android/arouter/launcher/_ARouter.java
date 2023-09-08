@@ -401,6 +401,12 @@ final class _ARouter {
         } else {
             InterceptorResult result = LogisticsCenter.doPrivateInterceptions(postcard);
             if (result != InterceptorResult.CONTINUE) {
+                if(result == InterceptorResult.INTERRUPT){
+                    if (postcard.getNavigationCallback() != null) {
+                        postcard.getNavigationCallback().onInterrupt(postcard);
+                    }
+                    GlobleCallbackNotifer.onInterrupt(postcard);
+                }
                 return null;
             }
         }
