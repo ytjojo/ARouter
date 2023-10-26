@@ -60,9 +60,24 @@ public class WebViewActivity extends AppCompatActivity {
         webView.setWebViewClient(this.webViewClient);
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
-        webSettings.setSupportZoom(true);
-        webSettings.setBuiltInZoomControls(true);
-        webSettings.setDisplayZoomControls(false);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+        webSettings.setUseWideViewPort(true);
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setBuiltInZoomControls(false);
+
+        webSettings.setAllowContentAccess(true);
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setAppCacheEnabled(true);
+        webSettings.setSavePassword(false);
+        webSettings.setSaveFormData(false);
+        webSettings.setUseWideViewPort(true);
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setBlockNetworkImage(false);
+        webSettings.setTextZoom(100);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+
+
+
     }
 }

@@ -300,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ARouter.getInstance().build(Uri.parse("https://github.com/ansen666/Webview?abc=111&name=ssss")).withIntentData(Uri.parse("https://github.com/ansen666/Webview")).navigation(this);
                 break;
             case R.id.startTest4:
-                ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322/")).navigation(this);
+                ARouter.getInstance().build(Uri.parse("http://m.aliyun.com/test/home/projack/mydata/12232322")).navigation(this);
                 break;
 
             case R.id.testSection:

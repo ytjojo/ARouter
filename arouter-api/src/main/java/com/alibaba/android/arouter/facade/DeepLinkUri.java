@@ -44,6 +44,9 @@ public class DeepLinkUri {
         String path = url;
         if (index != -1)
             path = url.substring(0, TextUtils.delimiterOffset(url, index, url.length(), "?#"));
+        if(path.endsWith("/")){
+            return path.substring(0,path.length()-1);
+        }
         return path;
     }
 
@@ -72,6 +75,10 @@ public class DeepLinkUri {
 
         String fixUrl = toFixUrl(rawUrl);
         if (this.matchedFixUrl.get(fixUrl) != null){
+            return true;
+        }
+        if(fixUrl.equals(this.secondaryPath)){
+            this.matchedFixUrl.put(fixUrl, Integer.valueOf(0));
             return true;
         }
 
@@ -142,6 +149,8 @@ public class DeepLinkUri {
                             if (j > 0) {
                                 if (!hasPath && !hasScheme && path.regionMatches(j - 1, "://", 0, 3)) {
                                     hasScheme = true;
+                                }else if(path.regionMatches(j - 2, "://", 0, 3)){
+                                    hasScheme = true;
                                 } else {
                                     hasPath = true;
                                 }
@@ -157,7 +166,7 @@ public class DeepLinkUri {
             if (!hasScheme) {
                 urlBuilder.insert(0, "\\S*");
             }
-            if (hasPath) {
+            if (!hasPath) {
                 urlBuilder.append("\\S*");
             }
             this.regUrl = urlBuilder.toString();
