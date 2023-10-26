@@ -14,7 +14,7 @@ compileJava {
 }
 
 dependencies {
-    implementation "${publishedGroupId}:arouter-annotation:1.0.3"
+    implementation "${publishedGroupId}:arouter-annotation:1.0.4"
 //    compileOnly files(Jvm.current().getToolsJar())
 //    implementation project(':arouter-annotation')
 
