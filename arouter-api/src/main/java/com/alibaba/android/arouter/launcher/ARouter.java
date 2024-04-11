@@ -231,6 +231,17 @@ public final class ARouter {
     public void resumePausedPostcard(Context context, String tag) {
         _ARouter.getInstance().resumePausedPostcard(context, tag);
     }
+    public void interrupt(Postcard postcard,Throwable throwable) {
+        _ARouter.getInstance().interrupt(postcard, throwable);
+    }
+
+    /**
+     * 可以在拦截器根据业务逻辑终止此次跳转
+     * @param postcard
+     */
+    public void cancelRouteInInterceptor(Postcard postcard) {
+        _ARouter.getInstance().interrupt(postcard, new IllegalStateException("cancel in Interceptor"));
+    }
 
     public boolean isPaused(Postcard postcard) {
         return _ARouter.getInstance().isPaused(postcard);

@@ -76,6 +76,8 @@ public final class Postcard extends RouteMeta {
 
     private boolean isForIntent;
 
+    private boolean isCheckRouterMeta;
+
 
     public Bundle getOptionsBundle() {
         return optionsCompat;
@@ -806,6 +808,15 @@ public final class Postcard extends RouteMeta {
 
     public boolean isForIntent() {
         return isForIntent;
+    }
+
+    public Postcard setCheckRouterMeta() {
+        isCheckRouterMeta = true;
+        return this;
+    }
+
+    public boolean isCheckRouterMeta() {
+        return isCheckRouterMeta;
     }
 
     public void interrupt(Throwable throwable) {

@@ -8,9 +8,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import androidx.core.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 
 import com.alibaba.android.arouter.core.InstrumentationHook;
 import com.alibaba.android.arouter.core.LogisticsCenter;
@@ -22,7 +24,11 @@ import com.alibaba.android.arouter.facade.Postcard;
 import com.alibaba.android.arouter.facade.callback.InterceptorCallback;
 import com.alibaba.android.arouter.facade.callback.NavigationCallback;
 import com.alibaba.android.arouter.facade.model.RouteMeta;
-import com.alibaba.android.arouter.facade.service.*;
+import com.alibaba.android.arouter.facade.service.AutowiredService;
+import com.alibaba.android.arouter.facade.service.DegradeService;
+import com.alibaba.android.arouter.facade.service.InterceptorService;
+import com.alibaba.android.arouter.facade.service.PathReplaceService;
+import com.alibaba.android.arouter.facade.service.PretreatmentService;
 import com.alibaba.android.arouter.facade.template.ILogger;
 import com.alibaba.android.arouter.facade.template.IMethodInvoker;
 import com.alibaba.android.arouter.facade.template.IPrivateInterceptor;
@@ -37,6 +43,7 @@ import com.alibaba.android.arouter.utils.TextUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -290,14 +297,16 @@ final class _ARouter {
      * @param callback    cb
      */
     protected Object navigation(final Context context, final Postcard postcard, final int requestCode, final NavigationCallback callback) {
+        final Activity activity = ActivityStartUtil.contextToActivity(context);
+        final Context localContext = activity == null ? mContext : activity;
         PretreatmentService pretreatmentService = ARouter.getInstance().navigation(PretreatmentService.class);
-        if (null != pretreatmentService && !pretreatmentService.onPretreatment(context, postcard)) {
+        if (null != pretreatmentService && !pretreatmentService.onPretreatment(localContext, postcard)) {
             // Pretreatment failed, navigation canceled.
             return null;
         }
 
         // Set context to postcard.
-        postcard.setContext(null == context ? mContext : context);
+        postcard.setContext(localContext);
         postcard.setRequestCode(requestCode);
         postcard.setNavigationCallback(callback);
 
@@ -316,6 +325,11 @@ final class _ARouter {
                                 " Group = [" + postcard.getGroup() + "]", Toast.LENGTH_LONG).show();
                     }
                 });
+            }
+
+            //skip callback and onLost
+            if (postcard.isCheckRouterMeta()) {
+                return null;
             }
 
             if (null != callback) {
@@ -339,15 +353,20 @@ final class _ARouter {
         if (null != callback) {
             callback.onFound(postcard);
         }
+
         GlobleCallbackNotifer.onFound(postcard);
+        // 如果目的是检查有没有找到，直接返回true
+        if (postcard.isCheckRouterMeta()) {
+            return true;
+        }
         if (postcard.isForIntent()) {
             postcard.greenChannel();
         }
-        return intercept(context, postcard, requestCode, callback);
+        return intercept(localContext, postcard, requestCode, callback);
     }
 
     private Object intercept(final Context context, final Postcard postcard, final int requestCode, final NavigationCallback callback) {
-        if(context != null && context != postcard.getContext()){
+        if (context != null && context != postcard.getContext()) {
             postcard.setContext(context);
         }
 
@@ -401,7 +420,7 @@ final class _ARouter {
         } else {
             InterceptorResult result = LogisticsCenter.doPrivateInterceptions(postcard);
             if (result != InterceptorResult.CONTINUE) {
-                if(result == InterceptorResult.INTERRUPT){
+                if (result == InterceptorResult.INTERRUPT) {
                     if (postcard.getNavigationCallback() != null) {
                         postcard.getNavigationCallback().onInterrupt(postcard);
                     }
@@ -612,6 +631,10 @@ final class _ARouter {
 
     }
 
+    protected void interrupt(Postcard postcard, Throwable throwable) {
+        postcard.interrupt(throwable);
+    }
+
     protected void onInterrupt(Object exception, Postcard postcard) {
         if (exception != null) {
             postcard.setTag(exception);
@@ -642,9 +665,27 @@ final class _ARouter {
             logger.error(Consts.TAG, "resumePausePostcard with tag " + tag + " not fonnd");
             return;
         }
-        if(postcard.getType() == null || postcard.getDestination() == null){
-            navigation(context,postcard,postcard.getRequestCode(),postcard.getNavigationCallback());
-        }else {
+        if (postcard.getType() == null || postcard.getDestination() == null) {
+            navigation(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
+        } else {
+            intercept(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
+        }
+    }
+
+    protected void resumePausedPostcard(@NonNull Context context,@NonNull Postcard postcard) {
+        ArrayList<String> tags = new ArrayList<String>();
+        for (Map.Entry<String, Postcard> entry : this.mPausedPostcards.entrySet()) {
+            if (entry.getValue() == postcard) {
+                tags.add(entry.getKey());
+            }
+        }
+        for (String tag : tags) {
+            this.mPausedPostcards.remove(tag);
+        }
+
+        if (postcard.getType() == null || postcard.getDestination() == null) {
+            navigation(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
+        } else {
             intercept(context, postcard, postcard.getRequestCode(), postcard.getNavigationCallback());
         }
     }
