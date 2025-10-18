@@ -1,6 +1,6 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
-    id "org.jetbrains.intellij" version '0.3.12'
+    id "org.jetbrains.intellij" version '1.17.4'
 }
 
 intellij {
@@ -23,7 +23,7 @@ publishPlugin {
 }
 
 dependencies {
-    compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib'
 }
 
 compileKotlin {

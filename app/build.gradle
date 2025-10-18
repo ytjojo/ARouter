@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.alibaba.arouter'
 
 android {
+    namespace = "com.alibaba.android.arouter.demo"
     compileSdkVersion Integer.parseInt(COMPILE_SDK_VERSION)
-    buildToolsVersion BUILDTOOLS_VERSION
 
     defaultConfig {
         minSdkVersion Integer.parseInt(MIN_SDK_VERSION)
@@ -12,8 +12,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     signingConfigs {
@@ -40,6 +40,13 @@ android {
 
     lintOptions {
         abortOnError false
+    }
+    
+    configurations {
+        all {
+            exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+            exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+        }
     }
 }
 

@@ -68,7 +68,7 @@ public class WebViewActivity extends AppCompatActivity {
         webSettings.setAllowContentAccess(true);
         webSettings.setDatabaseEnabled(true);
         webSettings.setDomStorageEnabled(true);
-        webSettings.setAppCacheEnabled(true);
+        // 移除setAppCacheEnabled调用，因为该方法在API 28及以上版本中已被移除
         webSettings.setSavePassword(false);
         webSettings.setSaveFormData(false);
         webSettings.setUseWideViewPort(true);
@@ -76,8 +76,5 @@ public class WebViewActivity extends AppCompatActivity {
         webSettings.setBlockNetworkImage(false);
         webSettings.setTextZoom(100);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-
-
-
     }
 }

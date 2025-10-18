@@ -9,14 +9,14 @@ ext {
 }
 
 compileJava {
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
 }
 
 dependencies {
     implementation "${publishedGroupId}:arouter-annotation:${arouter_annotation_release_version}"
 //    compileOnly files(Jvm.current().getToolsJar())
-//    implementation project(':arouter-annotation')
+//    compileOnly project(':arouter-annotation')
 
     annotationProcessor 'com.google.auto.service:auto-service:1.0-rc7'
     compileOnly 'com.google.auto.service:auto-service-annotations:1.0-rc7'

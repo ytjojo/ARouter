@@ -14,12 +14,14 @@ import com.alibaba.android.arouter.facade.annotation.Action;
 import com.alibaba.android.arouter.facade.annotation.Query;
 import com.alibaba.android.arouter.facade.annotation.RequestCode;
 import com.alibaba.android.arouter.facade.annotation.TargetPath;
+import com.alibaba.android.arouter.facade.annotation.Template;
 import com.alibaba.android.arouter.facade.callback.NavCallback;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Template
 public interface ITestNavigator {
 
 
