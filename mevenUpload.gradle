@@ -1,0 +1,119 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+def AndroidGroup = "com.wogoo.android"
+
+if (project.hasProperty("android")) { // Android libraries
+    tasks.register('sourcesJar', Jar) {
+        archiveClassifier = 'sources'
+        from android.sourceSets.main.java.srcDirs
+        exclude "**/R.class"
+        exclude "**/BuildConfig.class"
+    }
+
+    tasks.register('javadoc', Javadoc) {
+        source = android.sourceSets.main.java.srcDirs
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    }
+} else { // Java libraries
+    tasks.register('sourcesJar', Jar) {
+        archiveClassifier = 'sources'
+        from sourceSets.main.allSource
+        dependsOn classes
+    }
+}
+
+tasks.register('javadocJar', Jar) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
+    dependsOn javadoc
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+
+
+publishing {
+    def artifactIdPom = project.hasProperty("POM_ARTIFACT_ID") ? project.property("POM_ARTIFACT_ID").toString() : project.name
+
+    def projectVersionName = libraryVersion
+
+    if (project.plugins.hasPlugin("com.android.library") || project.plugins.hasPlugin("com.android.application")) {
+        println("android config")
+        projectVersionName = project.android.defaultConfig.versionName
+        if (projectVersionName == null || projectVersionName.equals("")) {
+            projectVersionName = libraryVersion
+        }
+    } else {
+        projectVersionName = libraryVersion
+    }
+
+    def versionName = project.hasProperty("VERSION_NAME") ? project.property("VERSION_NAME").toString() : projectVersionName
+    def groupName = project.hasProperty("POM_GROUP") ? project.property("POM_GROUP").toString() : AndroidGroup
+    def releaseUrl = "http://nexus.wogoo.com/repository/maven-release/"
+    def snapshotUrl = "http://nexus.wogoo.com/repository/maven-snapshot/"
+
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def mavenUser =   properties.getProperty("mavenUser")
+    def mavenPassword = properties.getProperty("mavenPassword")
+    println("Publishing artifact: " + artifactIdPom)
+    println("Version: " + versionName)
+    println("Group: " + groupName)
+    println("mavenUser: " + mavenUser)
+    println("mavenPassword: " + mavenPassword)
+
+
+    repositories {
+        // 本地仓库
+        maven {
+            name = 'local'
+            url = uri("../repo")
+        }
+        // 远程仓库
+        maven {
+            allowInsecureProtocol = true
+            name = 'remote'
+            url = versionName.contains("SNAPSHOT") ? snapshotUrl : releaseUrl
+            credentials {
+                username = mavenUser // 账号
+                password = mavenPassword // 密码
+            }
+        }
+    }
+
+    publications {
+        if (project.hasProperty("android")) {
+
+            release(MavenPublication) {
+                groupId = groupName
+                artifactId = artifactIdPom
+                version = versionName
+
+                afterEvaluate {
+                    from components.release
+                }
+            }
+//            debug(MavenPublication) {
+//                groupId = groupName
+//                artifactId = artifactIdPom + "-debug"
+//                version = versionName
+//                afterEvaluate {
+//                    from components.debug
+//                }
+//            }
+
+        } else {
+            maven(MavenPublication) {
+                groupId = groupName
+                artifactId = artifactIdPom
+                version = versionName
+
+                artifact sourcesJar
+                artifact javadocJar
+                from components.java
+            }
+        }
+    }
+}
