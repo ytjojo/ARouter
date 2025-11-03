@@ -1,5 +1,6 @@
 package com.alibaba.android.arouter.register.launch
 
+import cn.jailedbird.arouter_gradle_plugin.utils.InjectUtils
 import com.alibaba.android.arouter.register.agp8.GenerateRegisterCodeTask
 import com.alibaba.android.arouter.register.agp8.RegisterClassVisitorFactory
 import com.alibaba.android.arouter.register.agp8.RegisterPluginParams
@@ -38,6 +39,7 @@ abstract class PluginLaunch : Plugin<Project> {
             registerList.add(ScanSetting("IProviderGroup"))
             registerList.add(ScanSetting("ITemplateGroup"))
             registerList.add(ScanSetting("IMultiImplementGroup"))
+            InjectUtils.registerList.addAll(registerList)
 
             // Register instrumentation for each variant
 

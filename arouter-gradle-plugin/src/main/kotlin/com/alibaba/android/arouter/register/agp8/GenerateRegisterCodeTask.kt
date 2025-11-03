@@ -26,6 +26,7 @@ import java.util.jar.JarOutputStream
  */
 abstract class GenerateRegisterCodeTask : DefaultTask() {
 
+
     @get:InputFiles
     abstract val allDirectories: ListProperty<Directory>
 
@@ -42,9 +43,9 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
     abstract fun getVariantName(): Property<String>
 
     @TaskAction
-    fun taskAction(){
+    fun taskAction() {
         val start = System.currentTimeMillis()
-        val targetList = getRegisterList().get()
+        val targetList = InjectUtils.registerList
         val leftSlash = File.separator == "/"
         // ARouter plugin scan time spend 11 ms
         println("ARouter plugin scan time spend ${System.currentTimeMillis() - start} ms")
@@ -59,6 +60,9 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
                     } else {
                         directory.asFile.absolutePath + File.separatorChar
                     }
+
+                val addedEntries = HashSet<String>()
+
                 // println("Directory is $directoryPath")
                 directory.asFile.walk().forEach { file ->
                     if (file.isFile) {
@@ -73,7 +77,7 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
                             // So, When Scan and Copy should open different stream;
                             // Copy
                             file.inputStream().use { input ->
-                                jarOutput.saveEntry(entryName, input)
+                                jarOutput.saveEntry(entryName, input, addedEntries)
                             }
                         }
                     }
@@ -89,6 +93,7 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
                 // println("Jar file is $sourceJar")
                 val jar = JarFile(sourceJar)
                 val entries = jar.entries()
+                val addedEntries = HashSet<String>()
                 while (entries.hasMoreElements()) {
                     val entry = entries.nextElement()
                     try {
@@ -106,7 +111,7 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
                             }
                             // Copy
                             jar.getInputStream(entry).use { input ->
-                                jarOutput.saveEntry(entry.name, input)
+                                jarOutput.saveEntry(entry.name, input, addedEntries)
                             }
                         } else {
                             // Skip
@@ -133,7 +138,8 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
             )
             jarOutput.saveEntry(
                 ScanSetting.GENERATE_TO_CLASS_FILE_NAME,
-                ByteArrayInputStream(resultByteArray)
+                ByteArrayInputStream(resultByteArray),
+                HashSet<String>()
             )
             println("Inject byte code successful")
         }
@@ -141,7 +147,19 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
         println("ARouter plugin inject time spend ${System.currentTimeMillis() - startNew} ms")
     }
 
-    private fun JarOutputStream.saveEntry(entryName: String, inputStream: InputStream) {
+    private fun JarOutputStream.saveEntry(
+        entryName: String, inputStream: InputStream, addedEntries: HashSet<String>
+    ) {
+        // 避免重复添加 MANIFEST.MF 条目
+        if (addedEntries.contains(entryName)) {
+            // 如果已经添加过 MANIFEST.MF，则跳过
+            inputStream.close()
+            return
+        }
+
+        // 记录已添加的条目
+        addedEntries.add(entryName)
+
         this.putNextEntry(JarEntry(entryName))
         IOUtils.copy(inputStream, this)
         this.closeEntry()
@@ -149,11 +167,11 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
 
     fun generate() {
         Logger.i("Start generating register code for variant: ${getVariantName().get()}")
-        
+
         val fileContainsInitClass = findLogisticsCenterClass()
         if (fileContainsInitClass != null) {
 
-            this.getRegisterList().get().forEach { ext ->
+            InjectUtils.registerList.forEach { ext ->
                 Logger.i("Insert register code to file ${fileContainsInitClass.absolutePath}")
 
                 if (ext.classList.isEmpty()) {
@@ -169,6 +187,7 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
             Logger.e("Could not find LogisticsCenter.class file")
         }
     }
+
     private fun debugCollection(list: List<ScanSetting>) {
         println("Collect result:")
         list.forEach { item ->
@@ -178,6 +197,7 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
             }
         }
     }
+
     private fun findLogisticsCenterClass(): File? {
         // Search in jar files
         allJars.get().map { it.asFile }.forEach { jarFile ->
@@ -199,7 +219,7 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
                 }
             }
         }
-        
+
         // Search in directories
         allDirectories.get().map { it.asFile }.forEach { dir ->
             val classFile = File(dir, ScanSetting.GENERATE_TO_CLASS_FILE_NAME)
@@ -207,7 +227,7 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
                 return classFile
             }
         }
-        
+
         return null
     }
 }

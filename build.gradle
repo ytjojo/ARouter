@@ -1,6 +1,6 @@
 buildscript {
     ext.kotlin_version = '1.8.22'
-    ext.arouter_register_version = '1.0.9'
+    ext.arouter_register_version = '1.0.9-SNAPSHOT'
 
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())

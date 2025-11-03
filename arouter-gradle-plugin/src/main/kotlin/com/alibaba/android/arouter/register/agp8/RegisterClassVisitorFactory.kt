@@ -1,5 +1,6 @@
 package com.alibaba.android.arouter.register.agp8
 
+import cn.jailedbird.arouter_gradle_plugin.utils.InjectUtils
 import com.alibaba.android.arouter.register.utils.Logger
 import com.alibaba.android.arouter.register.utils.ScanSetting
 import com.android.build.api.instrumentation.AsmClassVisitorFactory
@@ -26,14 +27,14 @@ abstract class RegisterClassVisitorFactory : AsmClassVisitorFactory<RegisterPlug
         override fun visit(version: Int, access: Int, name: String?, signature: String?, superName: String?, Interfaces: Array<out String>?) {
             super.visit(version, access, name, signature, superName, Interfaces)
             // Scan for router classes
-            registerList.forEach { ext ->
+            InjectUtils.registerList.forEach { ext ->
                 if (ext.interfaceName != null && Interfaces != null) {
                     Interfaces.forEach { itName ->
                         if (itName == ext.interfaceName) {
                             //fix repeated inject init code when Multi-channel packaging
                             if (!ext.classList.contains(name)) {
                                 ext.classList.add(name!!)
-                                Logger.i("Found class for Interface ${ext.interfaceName}: ${name}")
+                                Logger.i("Found class for Interface ${ext.interfaceName}: ${name}" + " total: ${ext.classList.size} " )
                             }
                         }
                     }

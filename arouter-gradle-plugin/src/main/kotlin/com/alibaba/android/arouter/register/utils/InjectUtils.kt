@@ -13,6 +13,8 @@ import java.io.InputStream
  */
 @Suppress("SpellCheckingInspection")
 object InjectUtils {
+
+    val registerList = ArrayList<ScanSetting>()
     // refer hack class when object init
     fun referHackWhenInit(inputStream: InputStream, targetList: List<ScanSetting>): ByteArray {
         val cr = ClassReader(inputStream)

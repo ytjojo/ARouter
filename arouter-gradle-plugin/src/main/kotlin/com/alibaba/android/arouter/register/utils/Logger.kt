@@ -1,6 +1,8 @@
 package com.alibaba.android.arouter.register.utils
 
 import org.gradle.api.Project
+import org.gradle.api.logging.Logging
+import org.slf4j.LoggerFactory
 
 /**
  * Format log
@@ -11,28 +13,28 @@ import org.gradle.api.Project
  */
 class Logger {
     companion object {
-        var logger: org.gradle.api.logging.Logger? = null
+        private var logger: org.gradle.api.logging.Logger? = null
+            get() {
+                if (field == null) {
+                    field = Logging.getLogger(Logger::class.java)
+                }
+                return field!!
+            }
 
         fun make(project: Project) {
             logger = project.logger
         }
 
         fun i(info: String) {
-            if (info != null && logger != null) {
-                logger!!.info("ARouter::Register >>> $info")
-            }
+            logger!!.lifecycle("ARouter::Register >>> $info")
         }
 
         fun e(error: String) {
-            if (error != null && logger != null) {
-                logger!!.error("ARouter::Register >>> $error")
-            }
+            logger!!.error("ARouter::Register >>> $error")
         }
 
         fun w(warning: String) {
-            if (warning != null && logger != null) {
-                logger!!.warn("ARouter::Register >>> $warning")
-            }
+            logger!!.warn("ARouter::Register >>> $warning")
         }
     }
 }
