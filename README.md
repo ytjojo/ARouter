@@ -1,43 +1,43 @@
 # android路由改造
 
 
-### ARouter不足
+## ARouter不足
 
-#### 路由注解不支持多个路由
+### 路由注解不支持多个路由
 官方解决方式是：
 >PretreatmentService或者PathReplaceService中全局处理。
 
 缺点是集中式替换，而不是模块内部自己处理。
 
-#### 路由注解不支持正则表达式
+### 路由注解不支持正则表达式
 虽然在官方全局拦截器中是可以处理的，
 但这样就不够专注、不内聚。
 
-#### 暂停或者恢复路由功能不支持
+### 暂停或者恢复路由功能不支持
 参考下列场景：
 1. 深度链接打开目标页，app未启动要先打开首页再跳转目标页（先缓存，再跳转）。
 2. app未启动时用户点击通知栏打开目标页，app未启动要先打开首页再跳转目标页（先缓存，再跳转）。
 3. 跳转目标页面要手势密码验证，验证成功再跳转目标页。
 4. 跳转页面需要登陆，登陆成功才能跳转。
 
-#### 不支持局部降级
+### 不支持局部降级
 ARouter支持全局降级。
 
-#### 特定路由找不到目标页，模块内部处理
+### 特定路由找不到目标页，模块内部处理
 
-#### 不支持从path中获取参数
+### 不支持从path中获取参数
 本身是支持从query中获取参数的，但是不支持从path中获取参数，例如：weimai://test/module/tag/1111111，
 想获取tag或者1111111的值需要自己处理。
 
-#### 字段自动注入不支持可选字段
+### 字段自动注入不支持可选字段
 h5打开原生页面传递字段key是和ios保持统一的，但是当初定义有可能是另外一个字段，需要自己拦截处理。
 
-#### 路由不支持公共静态方法
+### 路由不支持公共静态方法
 工具类想暴露给其他模块就比较麻烦，需要实现IProvider。
 模块间启动如果参数复杂，需要大量添加key、value的代码。
 如果不关心字段key，只需要传递值就好了。
 
-#### 无法实现接口与实现类一对多关系
+### 无法实现接口与实现类一对多关系
 官方IProvider是一对一的关系。
 如果想根据接口获取所有模块实现类官方不支持。
 
@@ -45,12 +45,12 @@ h5打开原生页面传递字段key是和ios保持统一的，但是当初定义
 1. moduleLifecycle应用启动通知各个模块初始化。
 2. 特定业务需要各自模块自己注册的，如模块内部注册h5交互。
 
-### 如何解决以上问题
+## 如何解决以上问题
 
-#### 注解添加secondarypath字段，支持多个路由，支持正则表达式
+### 注解添加secondarypath字段，支持多个路由，支持正则表达式
 
 
-##### ARouter通过路由找到目标Activity原理
+### ARouter通过路由找到目标Activity原理
 
 ARouter保存路由信息是在Warehouse中routes字段中，
 routers是一个Map<String, RouteMeta>，
@@ -58,7 +58,7 @@ routers是一个Map<String, RouteMeta>，
 
 ARouter查找路由都是以path为key去这个map获取value，如果找不到，就会路由失败，onLost会触发。
 
-##### RouterMeta的生成
+### RouterMeta的生成
 RouteMeta是如何生成和添加进Warehouse中routes字段中的呢？
 
 技术核心涉及到编译器注解，编译器会根据注解生成对应的类和方法。
@@ -66,7 +66,7 @@ RouteMeta是如何生成和添加进Warehouse中routes字段中的呢？
 RouteProcessor会处理@Route注解，可以获取注解中path字段和添加注解TypeElement，根据这些信息构建
 RouteMeta对象。
 
-##### RouterMeta的添加到路由表
+### RouterMeta的添加到路由表
 接下来就是考虑如何将RouteMeta添加进map里。
 ARouter为提升效率，增加懒加载和分组加载的概念。
 
@@ -174,7 +174,7 @@ path方式就是以path从路由表取RouteMeta，Uri的方式先取path，以pa
 
 私有拦截器（没有会跳过）→ 构建Intent → 跳转。
 
-#### 从path中获取字段（query获取字段本身已经支持）
+### 从path中获取字段（query获取字段本身已经支持）
 
 核心原理是：
 
@@ -206,7 +206,7 @@ map集合中。
 
 
 
-#### 字段注入支持多个可选字段
+### 字段注入支持多个可选字段
 
 
 
@@ -260,7 +260,7 @@ substitute.girl = extras.getBoolean("sex", substitute.girl);
 
 会根据注解添加的每个key生成赋值代码，特殊类型的会判断是否包含key。
 
-#### 路由到静态方法或者构造方法的实现
+### 路由到静态方法或者构造方法的实现
 
 添加路由信息到路由表。
 
@@ -307,7 +307,7 @@ public class ARouter$$MethodInvoker$$modulejava implements IMethodInvoker {
 
 因为方法路由支持全局拦截器和私有拦截器，调用目标构造方法或者有返回值的静态方法时候要注意。
 
-#### 模版接口实现跳转不用关心具体参数key
+### 模版接口实现跳转不用关心具体参数key
 
 ```
 
@@ -370,7 +370,7 @@ ARouter.getInstance().navigationWithTemplate(ITestNavigator.class).navigateTest2
 
 会从集合中查找ITestNavigator.class的实现类，并实例化；
 
-#### @MultiImplement注解实现多个模块实现同一个接口
+### @MultiImplement注解实现多个模块实现同一个接口
 
 使用方式：
 
@@ -473,7 +473,7 @@ public class MultiImplmentsRegister implements IMultiImplementRegister {
 
 ARouter会缓存所有实例，保存在Map<Class, List> multImplmentsIntances。
 
-#### 私有拦截器
+### 私有拦截器
 
 私有拦截器可以使用在Activity、fragment、静态方法路由、构造方法路由。
 
@@ -519,7 +519,7 @@ public static void createPrivateInterceptors(Postcard postcard) {
 
 ```
 
-#### 路由暂停恢复和废弃暂停路由
+### 路由暂停恢复和废弃暂停路由
 使用场景,校验参数合法性,登录校验,权限校验等。
 可以拒绝跳转，也可以暂停跳转,等异步操作成功后，恢复跳转或者废弃暂停路由。
 
