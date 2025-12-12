@@ -39,6 +39,7 @@ abstract class PluginLaunch : Plugin<Project> {
             registerList.add(ScanSetting("IProviderGroup"))
             registerList.add(ScanSetting("ITemplateGroup"))
             registerList.add(ScanSetting("IMultiImplementGroup"))
+            InjectUtils.registerList.clear()
             InjectUtils.registerList.addAll(registerList)
 
             // Register instrumentation for each variant

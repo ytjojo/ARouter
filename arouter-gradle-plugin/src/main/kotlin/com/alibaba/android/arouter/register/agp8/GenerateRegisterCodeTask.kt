@@ -76,6 +76,12 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
                             // Use stream to detect register, Take care, stream can only be read once,
                             // So, When Scan and Copy should open different stream;
                             // Copy
+
+                            if (ScanUtils.shouldProcessClass(entryName)) {
+                                file.inputStream().use { input ->
+                                    ScanUtils.scanClass(input, targetList, false)
+                                }
+                            }
                             file.inputStream().use { input ->
                                 jarOutput.saveEntry(entryName, input, addedEntries)
                             }
@@ -189,9 +195,9 @@ abstract class GenerateRegisterCodeTask : DefaultTask() {
     }
 
     private fun debugCollection(list: List<ScanSetting>) {
-        println("Collect result:")
+        println("Collect result: size: ${list.size}")
         list.forEach { item ->
-            println("[${item.interfaceName}]")
+            println("${item.interfaceName} : [${item.interfaceName}]")
             item.classList.forEach {
                 println("\t $it")
             }
